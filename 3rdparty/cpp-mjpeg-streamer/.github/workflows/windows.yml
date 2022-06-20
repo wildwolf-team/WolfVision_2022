@@ -1,0 +1,23 @@
+name: Windows
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  msvc:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        architecture: [Win32, x64]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -D NADJIEB_MJPEG_STREAMER_BuildTests=On -D NADJIEB_MJPEG_STREAMER_MultipleHeaders=ON
+      - name: build
+        run: cmake --build build --config Debug --parallel 10
+      - name: test
+        run: cd build ; ctest -j 10 -C Debug --output-on-failure

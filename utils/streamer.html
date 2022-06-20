@@ -1,0 +1,104 @@
+<html>
+  <body>
+    <!-- mjpeg streamer -->
+    <img src="/pc">
+    <p>yaw angle</p>
+    <div id="yaw_angle"></div>
+    <p>pitch angle</p>
+    <div id="pitch_angle"></div>
+    <p>depth </p>
+    <div id="depth"></div>
+    <p>time </p>
+    <div id="time"></div>
+    <p>top_yaw </p>
+    <div id="top_yaw"></div>
+    <!-- <p>imu angle</p> -->
+    <!-- <div id="imu_angle"></div> -->
+    <!-- chart -->
+    <!-- <div id="yaw_angle_chart" style="width:600px;height:400px;"></div> -->
+    <!-- iframe streamer -->
+    <iframe src="/iframe" style="display:none"></iframe>
+  </body>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.2/dist/echarts.min.js"></script>
+  <script>
+
+var option = {
+  title: {
+    text: 'Data'
+  },
+  tooltip: {
+    trigger: 'axis',
+  },
+  xAxis: {
+    type: 'time'
+  },
+  yAxis: {
+    type: 'value'
+  },
+  dataZoom: [
+    {
+      type: 'slider',
+      xAxisIndex: 0,
+      filterMode: 'none',
+    },
+    {
+      type: 'slider',
+      yAxisIndex: 0,
+      filterMode: 'none'
+    },
+    {
+      type: 'inside',
+      xAxisIndex: 0,
+      filterMode: 'none'
+    },
+    {
+      type: 'inside',
+      yAxisIndex: 0,
+      filterMode: 'none'
+    }
+  ],
+  series: [
+    {
+      type: 'line',
+      showSymbol: false
+    }
+  ]
+};
+  </script>
+  <script>
+
+class charts {
+  constructor(div_id, value_name) {
+    this.data = [];
+    for (var i = 0; i < 100; i++) {
+      this.data.push('');
+    }
+    var chartDom = document.getElementById(div_id);
+    this.value_name = value_name;
+    this.chart = echarts.init(chartDom);
+    this.chart.setOption(option);
+    this.chart.setOption({series:[{name:this.value_name,data:this.data}]});
+    this.chart.setOption({title:{text:this.value_name}});
+  }
+  update(value) {
+    this.data.shift();
+    this.data.push(this.fetchData(value));
+    this.chart.setOption({series:[{data:this.data}]});
+  }
+  fetchData(value) {
+    var now = new Date();
+    return {
+      name: this.value_name,
+      value: [
+        now.toISOString(),
+        value
+      ]
+    };
+  }
+};
+
+// init chart
+// var echartb = new charts("yaw_angle_chart", "imu_yaw_angle");
+
+  </script>
+</html>

@@ -1,0 +1,9 @@
+---
+Language: Cpp
+BasedOnStyle: Chromium
+Standard: c++17
+AlignAfterOpenBracket: AlwaysBreak
+ColumnLimit: 120
+IndentWidth: 4
+IndentCaseLabels: false
+BreakBeforeBinaryOperators: All
