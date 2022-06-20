@@ -32,6 +32,9 @@
 #include "utils/mjpeg_streamer.hpp"
 #include "utils/reset_mv_camera.hpp"
 #include "utils/utils.hpp"
+#include "utils/json.hpp"
+#include "utils/simple_cpp_sockets.hpp"
+
 auto idntifier = fmt::format(fg(fmt::color::green) | fmt::emphasis::bold, "wolfvision");
 
 using MJPEGStreamer = nadjieb::MJPEGStreamer;
@@ -93,13 +96,23 @@ void PTZCameraThread(RoboCmd& _robo_cmd, RoboInf& _robo_inf, const std::shared_p
   RoboInf inf;
   auto              t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   std::stringstream ss;
-  ss << std::put_time(std::localtime(&t), "%Y_%m_%d_%H_%M_%S");
-  cv::VideoWriter vw_src;
-  std::string     s_v = "/home/nuc-73/workspace/Test/yolo_stju/WolfVision-Dev/configs/" + ss.str() + ".avi";
+  ss << std::put_time(std::localtime(&t), "/%Y_%m_%d_%H_%M_%S");
+  
+  std::string     s_v = CONFIG_FILE_PATH + ss.str() + ".avi";
   cv::Mat draw_img;
-  vw_src.open(s_v, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(960, 600), true);  // 记得打开
+  // cv::VideoWriter vw_src;
+  // vw_src.open(s_v, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(960, 600), true);  // 记得打开
   int buff_num = 0;
   int other_num = 0;
+  nlohmann::json config_json;
+  std::ifstream config_is(fmt::format("{}{}", CONFIG_FILE_PATH,
+                  "/robo_config.json"));
+  config_is >> config_json;
+  nlohmann::json debug_info_;
+  std::unique_ptr<UDPClient> pj_udp_cl_ = std::make_unique<UDPClient>(
+      config_json["pj_udp_cl_port"].get<int>(),
+      config_json["pj_udp_cl_ip"].get<std::string>());
+
   while (true) try {
       bool is_shoot = false;
       global_fps_.getTick();
@@ -191,14 +204,17 @@ void PTZCameraThread(RoboCmd& _robo_cmd, RoboInf& _robo_inf, const std::shared_p
         }
         // cv::imshow("src", src_img_);
         global_fps_.calculateFPSGlobal();
-        // webImage(_streamer_ptr, src_img_, params);
+        debug_info_["imu_yaw"] = _robo_inf.yaw_angle.load();
+        pj_udp_cl_->send_message(debug_info_.dump());
+        debug_info_.empty();
+        webImage(_streamer_ptr, src_img_, params);
         // _streamer_ptr->publish_text_value("top_yaw", _robo_inf.yaw_angle.load());
         // _streamer_ptr->publish_text_value("yaw_angle", _robo_cmd.yaw_angle.load());
         // _streamer_ptr->publish_text_value("pitch_angle", _robo_cmd.pitch_angle.load());
         // _streamer_ptr->publish_text_value("depth", _robo_cmd.depth.load());
         // _streamer_ptr->publish_text_value("time", time);
-        vw_src.write(draw_img);
-        sync();
+        // vw_src.write(draw_img);
+        // sync();
         armor.rst.clear();
         memset(armor.quantity, 0, sizeof(armor.quantity));
         if (_robo_inf.model == Mode::ENERGY_AGENCY) {
