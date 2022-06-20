@@ -59,29 +59,21 @@ class PnP {
     r_camera_ptz = cv::Mat(3, 3, CV_64FC1, r_data);
     t_camera_ptz = cv::Mat(3, 1, CV_64FC1, t_data);
 
-    small_object_3d_ = {// 单位：m
-                        {-0.066, 0.027, 0.},
-                        {-0.066, -0.027, 0.},
-                        {0.066, -0.027, 0.},
-                        {0.066, 0.027, 0.}};
-    big_object_3d_   = {// 单位：m
-                      {-0.115, 0.029, 0.},
-                      {-0.115, -0.029, 0.},
-                      {0.115, -0.029, 0.},
-                      {0.115, 0.029, 0.}};
-
-    buff_object_3d_.emplace_back(
-      cv::Point3f(-pnp_config_.buff_armor_width  * 0.5,
-                  -pnp_config_.buff_armor_height * 0.5, 0));
-    buff_object_3d_.emplace_back(
-      cv::Point3f(pnp_config_.buff_armor_width   * 0.5,
-                  -pnp_config_.buff_armor_height * 0.5, 0));
-    buff_object_3d_.emplace_back(
-      cv::Point3f(pnp_config_.buff_armor_width  * 0.5,
-                  pnp_config_.buff_armor_height * 0.5, 0));
-    buff_object_3d_.emplace_back(
-      cv::Point3f(-pnp_config_.buff_armor_width * 0.5,
-                  pnp_config_.buff_armor_height * 0.5, 0));
+    small_object_3d_ = {// 单位：mm
+                        {-66, 27, 0.},
+                        {-66, -27, 0.},
+                        {66, -27, 0.},
+                        {66, 27, 0.}};
+    big_object_3d_   = {// 单位：mm
+                      {-115, 29, 0.},
+                      {-115, -29, 0.},
+                      {115, -29, 0.},
+                      {115, 29, 0.}};
+    buff_object_3d_ = {// 单位：mm
+                      {-115, 29, 0.},
+                      {-115, -29, 0.},
+                      {115, -29, 0.},
+                      {115, 29, 0.}};
   }
 
   ~PnP() = default;
@@ -278,86 +270,14 @@ class PnP {
 
     return a;
   }
-  /**
-   * @brief 计算云台偏差角度
-   *
-   * @param _pos_in_ptz   旋转向量
-   * @param _bullet_speed 子弹速度
-   * @param _company      计算子弹下坠单位
-   * @return cv::Point3f  返回 Yaw Pitch 轴的偏移量和深度（mm）
-   * @author XX
-   */
-  cv::Point3f getAngle(const cv::Mat& _pos_in_ptz,
-                       const int      _bullet_speed,
-                       const int      _company) {
-    cv::Point3f angle;
 
-    const double *_xyz  = reinterpret_cast<const double *>(_pos_in_ptz.data);
-    double       down_t = 0.f;
-
-    if (_bullet_speed > 1e-2) {
-      down_t = _xyz[2] / (_bullet_speed * 1000);
-    }
-    
-    double offset_gravity = 0.5 * 9.8 * down_t * down_t * 1000;
-    double xyz[3]         = {_xyz[0], _xyz[1] - offset_gravity, _xyz[2]};
-
-    if (pnp_config_.barrel_ptz_offset_y != 0.f) {
-      double alpha =
-        asin(static_cast<double>(pnp_config_.barrel_ptz_offset_y) /
-             sqrt(xyz[1] * xyz[1] + xyz[2] * xyz[2]));
-      double beta  = 0.f;
-
-      if (xyz[1] < 0) {
-        beta    = atan(-xyz[1] / xyz[2]);
-        angle.y = static_cast<float>(-(alpha + beta));  // camera coordinate
-      } else if (xyz[1] < static_cast<double>(pnp_config_.barrel_ptz_offset_y)) {
-        beta    = atan(xyz[1] / xyz[2]);
-        angle.y = static_cast<float>(-(alpha - beta));
-      } else {
-        beta    = atan(xyz[1] / xyz[2]);
-        angle.y = static_cast<float>((beta - alpha));  // camera coordinate
-      }
-    } else {
-      angle.y = static_cast<float>(atan2(xyz[1], xyz[2]));
-    }
-
-    if (pnp_config_.barrel_ptz_offset_x != 0.f) {
-      double alpha =
-        asin(static_cast<double>(pnp_config_.barrel_ptz_offset_x) /
-             sqrt(xyz[0] * xyz[0] + xyz[2] * xyz[2]));
-      double beta  = 0.f;
-
-      if (xyz[0] > 0) {
-        beta    = atan(-xyz[0] / xyz[2]);
-        angle.x = static_cast<float>(-(alpha + beta));  // camera coordinate
-      } else if (xyz[0] < static_cast<double>(pnp_config_.barrel_ptz_offset_x)) {
-        beta    = atan(xyz[0] / xyz[2]);
-        angle.x = static_cast<float>(-(alpha - beta));
-      } else {
-        beta    = atan(xyz[0] / xyz[2]);
-        angle.x = static_cast<float>(beta - alpha);  // camera coordinate
-      }
-    } else {
-      angle.x = static_cast<float>(atan2(xyz[0], xyz[2]));
-    }
-    // 深度
-    angle.z  = static_cast<float>(xyz[2]);
-    // Yaw
-    angle.x  = static_cast<float>(angle.x) * 180 / CV_PI;
-    // Pitch
-    angle.y  = static_cast<float>(angle.y) * 180 / CV_PI;
-    angle.y -= getPitch(xyz[2], xyz[1], _bullet_speed * 1000, _company);
-
-    return angle;
-  }
   /**
    * @brief 计算云台偏差角度
    *
    * @param _pos_in_ptz   旋转向量
    * @param _bullet_speed 子弹速度
    * @param _company      子弹下坠单位
-   * @param _depth        距目标的深度
+   * @param _depth        距目标的深度(mm)
    * @return cv::Point3f  返回 Yaw Pitch 轴的偏移量和深度（mm）
    * @author XX
    */
@@ -369,18 +289,17 @@ class PnP {
 
     const double *_xyz  = reinterpret_cast<const double *>(_pos_in_ptz.data);
     double       down_t = 0.f;
-
+    
     if (_bullet_speed > 1e-2) {
-      down_t = _xyz[2] / (_bullet_speed * 1000);
+      down_t = (sqrt(_xyz[2] * _xyz[2] + _xyz[1] * _xyz[1] + _xyz[0] * _xyz[0])) / static_cast<double>(_bullet_speed * 1000);
+      
       if (_depth != 0) {
-        down_t = _depth / (_bullet_speed * 1000);
-        std::cout << "ENERGY_AGENCY = " << "\n";
+        down_t = _depth / static_cast<double>(_bullet_speed * 1000);
       }
     }
-
+    // std::cout << "down_t == " << down_t << "\n";
     double offset_gravity = 0.5 * 9.8 * down_t * down_t;
     double xyz[3]         = {_xyz[0], (_xyz[1] - offset_gravity), _xyz[2]};
-
     if (pnp_config_.barrel_ptz_offset_y != 0.f) {
       double alpha =
         asin(static_cast<double>(pnp_config_.barrel_ptz_offset_y) /
@@ -398,8 +317,6 @@ class PnP {
         angle.y = static_cast<float>((beta - alpha));  // camera coordinate
       }
     } else {
-      std::cout << "xyz[1] =  " << xyz[1] << "\n";
-      std::cout << "xyz[2] =  " << xyz[2] << "\n";
       angle.y = static_cast<float>(atan2(xyz[1], xyz[2]));
     }
 
@@ -423,17 +340,13 @@ class PnP {
     } else {
       angle.x = static_cast<float>(atan2(xyz[0], xyz[2]));
     }
-    angle.z  = static_cast<float>(xyz[2]) * 1000;
+    angle.z  = static_cast<float>(xyz[2]);
     if (_depth != 0) {
       angle.z = _depth;
-      std::cout << "ENERGY_AGENCY = " << "\n";
     }
-
     angle.x  = static_cast<float>(angle.x) * 180 / CV_PI;
     angle.y  = static_cast<float>(angle.y) * 180 / CV_PI;
-    std::cout << "angle.y = " << angle.y << "\n";
-    angle.y -= getPitch(angle.z, xyz[1] * 1000, _bullet_speed * 1000, _company);
-
+    angle.y -= getPitch(angle.z, xyz[1], _bullet_speed * 1000, _company);
     return angle;
   }
 
