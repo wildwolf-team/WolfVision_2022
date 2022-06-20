@@ -75,6 +75,14 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "lu": "cpp",
+        "superlusupport": "cpp",
+        "tensorsymmetry": "cpp",
+        "fft": "cpp",
+        "matrixfunctions": "cpp",
+        "openglsupport": "cpp",
+        "core": "cpp",
+        "geometry": "cpp"
     }
 }

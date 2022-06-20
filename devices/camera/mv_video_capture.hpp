@@ -9,6 +9,8 @@
  */
 #pragma once
 
+#include <mutex>
+
 #include <fmt/core.h>
 #include <fmt/color.h>
 
@@ -19,34 +21,23 @@
 
 namespace mindvision {
 
-auto idntifier_green = fmt::format(fg(fmt::color::green) | fmt::emphasis::bold, "mv_video_capture");
-auto idntifier_red   = fmt::format(fg(fmt::color::red)   | fmt::emphasis::bold, "mv_video_capture");
-
 enum EXPOSURETIME {
   // 相机曝光时间
-  EXPOSURE_50000 = 50000,
-  EXPOSURE_30000 = 30000,
-  EXPOSURE_25000 = 25000,
-  EXPOSURE_20000 = 20000,
   EXPOSURE_15000 = 15000,
   EXPOSURE_10000 = 10000,
-  EXPOSURE_5000  = 5000,
-  EXPOSURE_4000  = 4000,
-  EXPOSURE_2500  = 2500,
-  EXPOSURE_1200  = 1200,
-  EXPOSURE_800   = 800,
-  EXPOSURE_600   = 600,
-  EXPOSURE_400   = 400,
-  EXPOSURE_200   = 200,
-  EXPOSURE_100   = 100,
-  EXPOSURE_20    = 20,
+  EXPOSURE_7500 = 7500,
+  EXPOSURE_5000 = 5000,
+  EXPOSURE_2500 = 2500,
+  EXPOSURE_1200 = 1200,
+  EXPOSURE_800 = 800,
+  EXPOSURE_600 = 600,
+  EXPOSURE_400 = 400,
 };
 
 enum RESOLUTION {
   // 相机分辨率
   RESOLUTION_1280_X_1024,
   RESOLUTION_1280_X_800,
-  RESOLUTION_1280_X_768,
   RESOLUTION_960_X_600,
   RESOLUTION_640_X_480,
 };
@@ -64,10 +55,6 @@ struct Camera_Resolution {
       case mindvision::RESOLUTION::RESOLUTION_1280_X_800:
         cols = 1280;
         rows = 800;
-        break;
-      case mindvision::RESOLUTION::RESOLUTION_1280_X_768:
-        cols = 1280;
-        rows = 768;
         break;
       case mindvision::RESOLUTION::RESOLUTION_960_X_600:
         cols = 960;
@@ -93,7 +80,7 @@ struct CameraParam {
 
   CameraParam(const int                      _camera_mode,
               const mindvision::RESOLUTION   _resolution,
-              const mindvision::EXPOSURETIME _camera_exposuretime)
+              int _camera_exposuretime)
     : camera_mode(_camera_mode),
       camera_exposuretime(_camera_exposuretime),
       resolution(_resolution) {}
@@ -105,6 +92,9 @@ class VideoCapture {
   explicit VideoCapture(const mindvision::CameraParam &_camera_param);
 
   ~VideoCapture();
+
+  void operator>>(cv::Mat& img);
+
   /**
    * @brief 判断工业相机是否在线
    *
@@ -117,17 +107,8 @@ class VideoCapture {
    * 
    */
   void cameraReleasebuff();
-  /**
-   * @brief 设置相机参数
-   * 
-   * @param _CAMERA_RESOLUTION_COLS  设置相机宽度  
-   * @param _CAMERA_RESOLUTION_ROWS  设置相机高度
-   * @param _CAMERA_EXPOSURETIME     设置相机曝光
-   * @return int 
-   */
-  int cameraInit(const int _CAMERA_RESOLUTION_COLS,
-                 const int _CAMERA_RESOLUTION_ROWS,
-                 const int _CAMERA_EXPOSURETIME);
+
+  void open();
   /**
    * @brief 返回相机读取图片
    * 
@@ -135,14 +116,33 @@ class VideoCapture {
    */
   inline cv::Mat image() const { return cv::cvarrToMat(iplImage, true); }
 
+  void setCameraExposureTime(int _camera_exposure_time);
+
+  void setCameraOnceWB();
+
+  void setCameraColorGain(int iRGain, int iGGain, int iBGain);
+
+  void setCameraAnalogGrain(int iAnalogGain);
+
+  void close();
+
+  bool isOpen();
+
+  int getImageCols();
+
+  int getImageRows();
+
  private:
+  std::mutex mtx;
+
   unsigned char* g_pRgbBuffer;
 
-  int  iCameraCounts  = 1;
-  int  iStatus        = -1;
+  int camera_exposuretime_ = 0;
+  mindvision::Camera_Resolution camera_resolution_;
+
   int  hCamera;
   int  channel        = 3;
-  bool iscamera0_open = false;
+  bool is_open_       = false;
 
   tSdkCameraDevInfo   tCameraEnumList;
   tSdkCameraCapbility tCapability;
