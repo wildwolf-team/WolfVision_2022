@@ -48,6 +48,9 @@ class RoboSerial : public serial::Serial {
         robo_inf.robot_color.store(Color::BLUE);
       }
       robo_inf.bullet_velocity.store(int(robo_inf_uart_temp.bullet_velocity)-1);
+      if (robo_inf.bullet_velocity < 10 || robo_inf.bullet_velocity > 30) {
+        robo_inf.bullet_velocity.store(15);
+      }
     }
   }
 
