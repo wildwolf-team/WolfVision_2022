@@ -68,15 +68,19 @@ class WolfVision
     std::unique_ptr<basic_net::Detector> net_armor_;
     std::shared_ptr<mindvision::VideoCapture> capture_;
     basic_net::armor_detection armor_;
-    int buff_num = 0;
-    int other_num = 0;
+    int buff_num_        = 0;
+    int other_num_       = 0;
+    int camera_exposure_ = 0;
+    int buff_exposure_   = 0;
+    float yaw_power_     = 0;
+    bool debug_mode_     = false;
     
   private:
     cv::VideoWriter vw_src_;
     time_t t_;
     std::stringstream vw_t_ss_;
     std::string       vw_t_str_;
-    bool vw_mode = false;
+    bool vw_mode_ = false;
 
   private:
     cv::Mat src_img_;

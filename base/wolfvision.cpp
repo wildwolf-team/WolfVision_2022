@@ -18,8 +18,13 @@ WolfVision::WolfVision() try {
       config_json_["pj_udp_cl_ip"].get<std::string>());
   params_ = {cv::IMWRITE_JPEG_QUALITY, 100};
 
-  int camera_exposure = config_json_["camera_exposure_time"].get<int>();
-  mindvision::CameraParam camera_params(0, mindvision::RESOLUTION_960_X_600, camera_exposure);
+  vw_mode_ = config_json_["vw_mode"];
+  debug_mode_ = config_json_["debug_mode"];
+
+  camera_exposure_ = config_json_["camera_exposure_time"].get<int>();
+  buff_exposure_   = config_json_["buff_exposure"].get<int>();
+  yaw_power_       = config_json_["yaw_power"].get<float>();
+  mindvision::CameraParam camera_params(0, mindvision::RESOLUTION_960_X_600, camera_exposure_);
   capture_ = std::make_shared<mindvision::VideoCapture>(camera_params);
   if(!capture_->isOpen())
     capture_->open();
@@ -29,12 +34,12 @@ WolfVision::WolfVision() try {
   net_armor_ = std::make_unique<basic_net::Detector>();
   net_armor_->detection_init(fmt::format("{}{}", CONFIG_FILE_PATH, "/net/opt4_FP16.xml"), "GPU");
   armor_.rst.reserve(128);
-  if (vw_mode) {
+  pnp_->serYawPower(yaw_power_);
+  if (vw_mode_) {
     t_ = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    vw_t_ss_ << std::put_time(std::localtime(&t_), "/%Y_%m_%d_%H_%M_%S");
+    vw_t_ss_ << std::put_time(std::localtime(&t_), "/video/%Y_%m_%d_%H_%M_%S");
     vw_t_str_ = CONFIG_FILE_PATH + vw_t_ss_.str() + ".avi";
     vw_src_.open(vw_t_str_, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(960, 600), true);  // 记得打开  
-    vw_mode = config_json_["vw_mode"];
   }
 
 } catch(const std::exception& e) {
@@ -57,7 +62,7 @@ void WolfVision::autoAim() {
       inf_.yaw_angle = robo_inf_.yaw_angle.load();
       inf_.pitch_angle = robo_inf_.pitch_angle.load();
 
-      if (vw_mode) {
+      if (vw_mode_) {
         write_img_ = src_img_.clone();
         vw_src_.write(write_img_);
         sync();
@@ -105,6 +110,7 @@ void WolfVision::autoAim() {
               // std::cout << "inf_.yaw_angle.load() - pnp_->returnYawAngle() = " << inf_.yaw_angle.load() - pnp_->returnYawAngle() << "\n";
               net_armor_->forecast_armor(pnp_->returnDepth(), robo_inf_.bullet_velocity.load(), armor_.rst[0].pts, src_img_);
               // net_armor_->defense_tower(pnp_->returnDepth(), robo_inf_.bullet_velocity.load(), armor_.rst[0].pts, src_img_);
+              // pnp_->solvePnPx(0, src_img_, net_armor_->forecast_armor(robo_inf_.bullet_velocity.load(), pnp_->returnTvec(), pnp_->returnYawAngle(), pnp_->returnPitchAngle()));
               if (armor_.rst[0].tag_id == 1 || armor_.rst[0].tag_id == 0) {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 1, armor_.rst[0].pts);
               } else {
@@ -130,8 +136,10 @@ void WolfVision::autoAim() {
             break;
           }
       }
-      disData();
-      webImage(src_img_);
+      if (debug_mode_) {
+        disData();
+        webImage(src_img_);
+      }
       armor_.rst.clear();
       memset(armor_.quantity, 0, sizeof(armor_.quantity));
       switchMode();
@@ -157,26 +165,27 @@ void WolfVision::spin() {
 }
 
 void WolfVision::disData() {
-  debug_info_["imu_yaw"] = robo_inf_.yaw_angle.load();
-  debug_info_["yaw"] = pnp_->returnYawAngle();
-  debug_info_["pitch"] = pnp_->returnPitchAngle();
-  pj_udp_cl_->send_message(debug_info_.dump());
-  debug_info_.empty();
+    debug_info_["imu_yaw"] = inf_.yaw_angle.load();
+    debug_info_["yaw"] = pnp_->returnYawAngle();
+    debug_info_["pitch"] = pnp_->returnPitchAngle();
+    debug_info_["tagret_yaw"] = inf_.yaw_angle.load() - pnp_->returnYawAngle();
+    pj_udp_cl_->send_message(debug_info_.dump());
+    debug_info_.empty();
 }
 
 void WolfVision::switchMode() {
   if (robo_inf_.model == Mode::ENERGY_AGENCY) {
-    buff_num += 1;
-    other_num = 0;
+    buff_num_ += 1;
+    other_num_ = 0;
   } else {
-    buff_num = 0;
-    other_num += 1;
+    buff_num_ = 0;
+    other_num_ += 1;
   }
-  if (buff_num == 1) {
-    capture_->setCameraExposureTime(1200);
+  if (buff_num_ == 1) {
+    capture_->setCameraExposureTime(buff_exposure_);
   }
-  if (other_num == 1) {
-    capture_->setCameraExposureTime(15000);
+  if (other_num_ == 1) {
+    capture_->setCameraExposureTime(camera_exposure_);
   }
 }
 
