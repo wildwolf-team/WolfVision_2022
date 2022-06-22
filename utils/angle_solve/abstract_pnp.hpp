@@ -21,8 +21,6 @@
 namespace abstract_pnp {
 
 struct PnP_Config {
-  int    company      = 1;
-
   double ptz_camera_x = 0.0;
   double ptz_camera_y = 0.0;
   double ptz_camera_z = 0.0;
@@ -31,11 +29,6 @@ struct PnP_Config {
   float  barrel_ptz_offset_y = 0.0;
   float  offset_armor_pitch  = 0.0;
   float  offset_armor_yaw    = 0.0;
-  // 各种装甲板模型
-  int    small_armor_height  = 60,  small_armor_width = 140;
-  int    big_armor_width     = 245, big_armor_height  = 60;
-  int    light_size_width    = 10,  light_size_height = 55;
-  int    buff_armor_width    = 250, buff_armor_height = 65;
 };
 
 class PnP {
