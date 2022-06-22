@@ -184,6 +184,7 @@ cv::Point2f Detector::angleCalculation(const cv::Point2f& _target_center, const 
 
 void Detector::kalman_init() {
   A       = _Kalman::Matrix_xxd::Identity();
+  R       = _Kalman::Matrix_xxd::Identity();
   H(0, 0) = 1;
   R(0, 0) = 0.01;
   for (int i = 1; i < S; i++) {

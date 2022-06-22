@@ -241,7 +241,7 @@ void WolfVision::serialRead() {
       if (serial_->isOpen()) {
         serial_->ReceiveInfo(robo_inf_);
       }
-      std::this_thread::sleep_for(2ms);
+      // std::this_thread::sleep_for(1ms);
     } catch (const std::exception& e) {
       static int serial_read_excepted_times{0};
       if (serial_read_excepted_times++ > 3) {

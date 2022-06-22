@@ -52,8 +52,8 @@ public:
 
     Matrix_x1d update(Matrix_z1d z_k, double t) {
       // 设置转移矩阵中的时间项
-      for (int i = 1; i < V_X; i++) {
-        A(i - 1, i) = t - last_t;
+        for (int i = 1; i < V_X; i++) {
+            A(i - 1, i) = t - last_t;
         }
         last_t = t;
         // 预测下一时刻的值

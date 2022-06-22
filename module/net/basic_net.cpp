@@ -80,6 +80,7 @@ void Detector::forecast_armor(const float depth, const int bullet_velocity, cv::
 
 void Detector::kalman_init() {
   A       = _Kalman::Matrix_xxd::Identity();
+  R       = _Kalman::Matrix_xxd::Identity();
   H(0, 0) = 1;
   R(0, 0) = 0.01;
   for (int i = 1; i < S; i++) {
