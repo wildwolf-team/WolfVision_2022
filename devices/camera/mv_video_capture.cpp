@@ -89,9 +89,12 @@ void VideoCapture::open() {
       CameraSetAeState(hCamera, FALSE);
       CameraSetExposureTime(hCamera, camera_exposuretime_);
 
+      CameraSetGain(hCamera, 150, 108, 100);
+      CameraSetAnalogGain(hCamera, 330);
+
       // 关闭自动白平衡
       CameraSetWbMode(hCamera, FALSE);
-      CameraSetOnceWB(hCamera);
+      // CameraSetOnceWB(hCamera);
       // 让SDK进入工作模式
       CameraPlay(hCamera);
       CameraReleaseImageBuffer(hCamera, pbyBuffer);

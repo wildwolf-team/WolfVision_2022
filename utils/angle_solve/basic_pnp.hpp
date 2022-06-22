@@ -217,14 +217,14 @@ class PnP : public abstract_pnp::PnP {
     target_2d_.clear();
     target_2d_.shrink_to_fit();
   }
-
+  void serYawPower(const float _yaw_power) {yaw_power_ = _yaw_power;}
  private:
   PnP_Information pnp_info_;
 
   cv::Mat cameraMatrix_, distCoeffs_;
   cv::Mat rvec_ = cv::Mat::zeros(3, 3, CV_64FC1);
   cv::Mat tvec_ = cv::Mat::zeros(3, 1, CV_64FC1);
-
+  float yaw_power_ = 0.f;
   std::vector<cv::Point2f> target_2d_;
   std::vector<cv::Point3f> object_3d_;
 };
