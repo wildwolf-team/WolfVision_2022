@@ -58,6 +58,11 @@ void WolfVision::autoAim() {
 
       auto end  = std::chrono::system_clock::now();
       float time = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() * 0.001);
+      if (debug_mode_) {
+        static float last_time = 0;
+        fmt::print("[{}] fps == : {} \n", idntifier, 1/(time - last_time));
+        last_time = time;
+      }
       armor_.armor_t = time;     
       inf_.yaw_angle = robo_inf_.yaw_angle.load();
       inf_.pitch_angle = robo_inf_.pitch_angle.load();
@@ -69,7 +74,7 @@ void WolfVision::autoAim() {
       }
 
       switch (robo_inf_.model) {
-        case Mode::ENERGY_AGENCY: {
+          case Mode::ENERGY_AGENCY: {
             // std::cout << " is ENERGY_AGENCY mode " << std::endl;
             cv::resize(src_img_, src_img_, cv::Size(1280, 800));
             buff_->runTask(src_img_, robo_inf_, robo_cmd_, time);
@@ -116,8 +121,6 @@ void WolfVision::autoAim() {
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[0].pts);
               }
-            } else {
-              net_armor_->forecastFlagV(armor_.armor_t, inf_.yaw_angle.load(), inf_.pitch_angle.load());
             }
             updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
             break;
