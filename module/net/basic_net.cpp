@@ -333,11 +333,24 @@ void Detector::process_frame(cv::Mat& inframe, armor_detection& armor){
     
     // 图片预处理
     cv::Mat x;  // 不要使用static, 该Mat在后续需要转换为CV_32F类型, 但传入的图片是CV_U8类型, 使用的static会消耗多余时间用于转换类型
-    float fx = (float) inframe.cols / 640.f, fy = (float) inframe.rows / 384.f;
-    cv::cvtColor(inframe, x, cv::COLOR_BGR2RGB);
-    if (inframe.cols != 640 || inframe.rows != 384) {
-        cv::resize(x, x, {640, 384});
+    float fx, fy; // x, y 轴的拉伸比例
+    float f = (float)inframe.cols / (float)inframe.rows; //长宽比
+    if(f > (640.f / 384.f)) {
+      // 如果原图长宽比大于模型输入长宽比，则拉伸长。
+      cv::resize(inframe, x, cv::Size(), (double)640 / (double)inframe.cols, (double)640 / (double)inframe.cols);
+      fx = (float)inframe.cols / 640.f;
+      fy = (float)inframe.cols / 640.f;
+      cv::copyMakeBorder(x, x, 0, 384 - x.rows, 0, 0,
+                        cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0)); // 填充黑色
+    } else {
+      // 如果原图长宽比小于模型输入长宽比，则拉伸宽。
+      cv::resize(inframe, x, cv::Size(), (double)384 / (double)inframe.rows, (double)384 / (double)inframe.rows);
+      fx = (float)inframe.rows / 384.f;
+      fy = (float)inframe.rows / 384.f;
+      cv::copyMakeBorder(x, x, 0, 0, 0, 640 - x.cols,
+                          cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0)); // 填充黑色
     }
+    cv::cvtColor(x, x, cv::COLOR_BGR2RGB);
 
     // 获取输入节点
     InferRequest::Ptr infer_request = _network.CreateInferRequestPtr();
