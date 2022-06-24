@@ -44,7 +44,7 @@ void VideoCapture::operator>>(cv::Mat& img) {
 
 void VideoCapture::open() {
   if(is_open_) {
-    fmt::print("[{}] Error, mindvision industrial camera already open: {}\n", idntifier_red);
+    fmt::print("[{}] Error, mindvision industrial camera already open.\n", idntifier_red);
   }
   CameraSdkInit(1);
 
@@ -53,7 +53,7 @@ void VideoCapture::open() {
   int cameraStatus = CameraEnumerateDevice(&pCameraList, &piNums);
 
   if (piNums == 0) {
-    fmt::print("[{}] Error, no mindvision industrial camera detected: {}\n", idntifier_red);
+    fmt::print("[{}] Error, no mindvision industrial camera detected.\n", idntifier_red);
 
     is_open_ = false;
   } else {
