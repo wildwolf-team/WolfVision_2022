@@ -30,12 +30,12 @@ find_package(Threads REQUIRED)
 
 include_directories(
     #OpenVINO推理引擎的头文件
-    /home/nuc-73/openvino_2021/deployment_tools/inference_engine/include/
-    /home/nuc-73/openvino_2021/deployment_tools/ngraph/include/
+    ~/intel/openvino_2021/deployment_tools/inference_engine/include/
+    ~/intel/openvino_2021/deployment_tools/ngraph/include/
     .
 )
 
-set(InferenceEngine_DIR "/home/nuc-73/openvino_2021/deployment_tools/inference_engine/share")
+set(InferenceEngine_DIR "~/intel/openvino_2021/deployment_tools/inference_engine/share")
 find_package(InferenceEngine)
 
 # new serial
