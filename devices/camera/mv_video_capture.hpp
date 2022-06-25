@@ -38,6 +38,7 @@ enum RESOLUTION {
   // 相机分辨率
   RESOLUTION_1280_X_1024,
   RESOLUTION_1280_X_800,
+  RESOLUTION_1280_X_768,
   RESOLUTION_960_X_600,
   RESOLUTION_640_X_480,
 };
@@ -55,6 +56,10 @@ struct Camera_Resolution {
       case mindvision::RESOLUTION::RESOLUTION_1280_X_800:
         cols = 1280;
         rows = 800;
+        break;
+      case mindvision::RESOLUTION::RESOLUTION_1280_X_768:
+        cols = 1280;
+        rows = 768;
         break;
       case mindvision::RESOLUTION::RESOLUTION_960_X_600:
         cols = 960;

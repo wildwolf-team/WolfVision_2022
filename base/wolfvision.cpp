@@ -24,11 +24,11 @@ WolfVision::WolfVision() try {
   camera_exposure_ = config_json_["camera_exposure_time"].get<int>();
   buff_exposure_   = config_json_["buff_exposure"].get<int>();
   yaw_power_       = config_json_["yaw_power"].get<float>();
-  mindvision::CameraParam camera_params(0, mindvision::RESOLUTION_960_X_600, camera_exposure_);
+  mindvision::CameraParam camera_params(0, mindvision::RESOLUTION_1280_X_768, camera_exposure_);
   capture_ = std::make_shared<mindvision::VideoCapture>(camera_params);
   if(!capture_->isOpen())
     capture_->open();
-  pnp_     = std::make_unique<basic_pnp::PnP>(fmt::format("{}{}", CONFIG_FILE_PATH, "/camera/mv_camera_config_4912.xml"),
+  pnp_     = std::make_unique<basic_pnp::PnP>(fmt::format("{}{}", CONFIG_FILE_PATH, "/camera/mv_camera_config_555.xml"),
                                               fmt::format("{}{}", CONFIG_FILE_PATH, "/angle_solve/basic_pnp_config.xml"));
   buff_    = std::make_unique<basic_buff::Detector>(fmt::format("{}{}", CONFIG_FILE_PATH, "/buff/basic_buff_config.xml"));
   net_armor_ = std::make_unique<basic_net::Detector>();
@@ -76,7 +76,6 @@ void WolfVision::autoAim() {
       switch (robo_inf_.model) {
           case Mode::ENERGY_AGENCY: {
             // std::cout << " is ENERGY_AGENCY mode " << std::endl;
-            cv::resize(src_img_, src_img_, cv::Size(1280, 800));
             buff_->runTask(src_img_, robo_inf_, robo_cmd_, time);
             // webImage(_streamer_ptr, buff_->returnBinImage(), params);
             break;
@@ -167,6 +166,7 @@ void WolfVision::disData() {
     debug_info_["imu_yaw"] = inf_.yaw_angle.load();
     debug_info_["yaw"] = pnp_->returnYawAngle();
     debug_info_["pitch"] = pnp_->returnPitchAngle();
+    debug_info_["depth"] = pnp_->returnDepth();
     debug_info_["tagret_yaw"] = inf_.yaw_angle.load() - pnp_->returnYawAngle();
     pj_udp_cl_->send_message(debug_info_.dump());
     debug_info_.empty();
