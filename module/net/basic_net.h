@@ -54,10 +54,17 @@ class Detector
 public:
     Detector();
     ~Detector();
+    inline bool returninsideflag() { return inside_flag; }
+    inline bool returntimeflag() { return time_flag; }
+    inline bool returnflag() { return fire_flag; }
+ 
     //初始化
     bool detection_init(std::string xml_path, std::string device); // ,double cof_threshold,double nms_area_threshold
     //释放资源
     bool uninit();
+    // 返回最优击打目标装甲板序号
+    int finaly_armor_num(armor_detection& armor);
+
     //处理图像获取结果
     // std::vector<bbox_t> process_frame(Mat& inframe);
     void process_frame(cv::Mat& inframe, armor_detection& armor);
@@ -96,6 +103,10 @@ public:
     std::string             _device;            // 加载模型的设备
     // double                  _cof_threshold;       //置信度阈值,计算方法是框置信度乘以物品种类置信度
     // double                  _nms_area_threshold;  //nms最小重叠面积阈值
+
+    bool inside_flag;
+    bool time_flag;
+    bool fire_flag;
 
     static constexpr int    TOPK_NUM = 128;     // std::vector<bbox_t> rst;  rst.reserve(TOPK_NUM);
     static constexpr float  KEEP_THRES = 0.1f;  // if (box_buffer[8] < inv_sigmoid(KEEP_THRES)) break;

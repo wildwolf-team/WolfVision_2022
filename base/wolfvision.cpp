@@ -100,6 +100,36 @@ void WolfVision::autoAim() {
             updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), is_shoot_);
             break;
           }
+
+          case Mode::SENTINEL_AUTONOMOUS_MODE:
+            net_armor_->process_frame(src_img_, armor_);
+            if (net_armor_->screen_armor(robo_inf_, armor_, src_img_)) {
+              int armor_num = net_armor_->finaly_armor_num(armor_);
+              if(armor_.rst[0].tag_id == 1 || armor_num == -1){
+               armor_num = 0;
+              }
+              if (armor_.rst[armor_num].tag_id == 1 ) {
+                pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 1, armor_.rst[armor_num].pts);
+              } else {
+                pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[armor_num].pts);
+              }
+              net_armor_->forecastFlagV(armor_.armor_t, inf_.yaw_angle.load() - pnp_->returnYawAngle(), inf_.pitch_angle.load() + pnp_->returnPitchAngle());
+              net_armor_->forecast_armor(pnp_->returnDepth(), robo_inf_.bullet_velocity.load(), armor_.rst[armor_num].pts, src_img_);
+              if (armor_.rst[armor_num].tag_id == 1 ) {
+                pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 1, armor_.rst[armor_num].pts);
+              } else {
+                pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[armor_num].pts);
+              }
+              if (net_armor_->returnflag() && net_armor_->returninsideflag() && net_armor_->returntimeflag()) {
+             
+               updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 1);
+            }
+            else{
+             updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
+            }
+            break;
+          
+
           case Mode::FORECAST_MODE: {
             // std::cout << "Mode::FORECAST_MODE" << "\n";
             net_armor_->process_frame(src_img_, armor_);

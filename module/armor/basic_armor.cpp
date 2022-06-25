@@ -1053,6 +1053,7 @@ std::vector<cv::Point2f> Detector::forecast_armor(float depth, const int bullet_
   compensate_w           = (last_last_compensate_w + last_compensate_w + compensate_w) * 0.333;
   last_last_compensate_w = last_compensate_w;
   last_compensate_w      = compensate_w;
+  
   static cv::Point2f ss  = cv::Point2f(0, 0);
   ss = cv::Point2f(-compensate_w, 0);
   std::vector<cv::Point2f> traget_2d = returnFinalArmor4Point(num);
@@ -1112,7 +1113,7 @@ std::vector<cv::Point2f> Detector::top_forecast_armor(float depth, const int bul
   double predict_time = (depth * 0.001 / bullet_velocity);
   double s_yaw        = atan2(predict_time * c_speed * depth * 0.001, 1);
   // std::cout << "s_yaw=" << s_yaw << std::endl;
-  compensate_w           = 8 * tan(s_yaw);
+  compensate_w           = 4.5 * tan(s_yaw);  // 8
   compensate_w           = (last_last_compensate_w + last_compensate_w + compensate_w) * 0.333;
   last_last_compensate_w = last_compensate_w;
   last_compensate_w      = compensate_w;
@@ -1124,6 +1125,39 @@ std::vector<cv::Point2f> Detector::top_forecast_armor(float depth, const int bul
   traget_2d[1] += ss;
   traget_2d[2] += ss;
   traget_2d[3] += ss;
+  cv::Point2f traget_center;
+  traget_center.x = (traget_2d[1].x + traget_2d[2].x) * 0.5;
+  traget_center.y = (traget_2d[0].y + traget_2d[1].y) * 0.5;
+  int distance    = fabs(traget_center.x - 640);
+  if ((fabs(armor_[0].armor_rect.center.x - traget_center.x)) > 0) {
+    if (armor_[0].armor_rect.center.x < 700 && armor_[0].armor_rect.center.x > 500 && traget_center.x < 700 && traget_center.x > 450 && armor_[0].armor_rect.center.x - traget_center.x > 0) {  // 左
+      inside_flag = 1;
+    } else if (armor_[0].armor_rect.center.x > 600 && armor_[0].armor_rect.center.x < 800 && traget_center.x < 850 && traget_center.x > 600 &&
+               traget_center.x - armor_[0].armor_rect.center.x > 0) {  //  右
+      inside_flag = 1;
+    }
+    else {
+      inside_flag = 0;
+    }
+  }
+  if (distance < 100) {
+    fire_flag = 1;
+  } else {
+    fire_flag = 0;
+  }
+  time_flag = predict_time < 0.8 ? 1 : 0;
+  
+  cv::Point2f center = returnFinalArmorRotatedRect(0).center;
+  center += ss;
+  int width = returnFinalArmorRotatedRect(0).size.width * 1.5;
+  cv::circle(draw_img_, center, 15, cv::Scalar(0, 255, 255), -1);
+  cv::line(draw_img_, cv::Point(draw_img_.cols * 0.5 - width, 0), cv::Point(draw_img_.cols * 0.5 - width, draw_img_.rows), cv::Scalar(0, 0, 255));
+  cv::line(draw_img_, cv::Point(draw_img_.cols * 0.5 + width, 0), cv::Point(draw_img_.cols * 0.5 + width, draw_img_.rows), cv::Scalar(0, 0, 255));
+  is_shoot = false;
+  if (center.x < draw_img_.cols * 0.5 + width && center.x > draw_img_.cols * 0.5 - width) {
+    is_shoot = true;
+  }
+
   return traget_2d;
 }
 

@@ -532,6 +532,9 @@ class Detector {
   double              c_acc                    = 0.0;
   double              p_last_speed           = 0.0;
   double              last_predict_time      = 0.0;
+  bool                inside_flag             = 0;
+  bool                fire_flag                = 0;
+  bool time_flag  = 0;
 
   int num_cnt_ = 0;
   // 哨兵模型初始化计数器

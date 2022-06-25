@@ -7,6 +7,16 @@ Detector::~Detector(){}
 
 float Detector::getDistance(const cv::Point a, const cv::Point b) { return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)); }
 
+// 哨兵筛选最优装甲板
+int Detector::finaly_armor_num(armor_detection& armor){
+  for(int i = 0;i<armor.rst.size();i++){
+    if(armor.rst[i].tag_id == 1){
+      return i;
+    }
+  }
+  return -1;
+}
+
 // 小陀螺自动击打
 bool Detector::topAutoShoot(const int depth, const int bullet_velocity, cv::Point2f p[4], const cv::RotatedRect top_armor, cv::Mat src_img) {
   double predict_time  = (float(depth) * 0.001 / (bullet_velocity));

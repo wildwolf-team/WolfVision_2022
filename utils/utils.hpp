@@ -46,11 +46,14 @@ enum Color {
 };
 // Description of operation mode information
 enum Mode {
-  DEFAULT_MODE,
+  DEFAULT_MODE,  // 0
   // Self-Scanning Mode
-  SUP_SHOOT,
+  SUP_SHOOT,  // 1
   // Talisman Mode
-  ENERGY_AGENCY,
+  ENERGY_AGENCY,  // 2
+  // my Mode
+  SENTINEL_AUTONOMOUS_MODE,
+  // little
   TOP_MODE = 5,
   // Forecast Mode
   FORECAST_MODE = 6,
