@@ -291,7 +291,7 @@ class PnP {
       }
     }
     // std::cout << "down_t == " << down_t << "\n";
-    double offset_gravity = 0.5 * 9.8 * down_t * down_t;
+    int offset_gravity = 0.5 * 9.8 * down_t * down_t * 1000;
     double xyz[3]         = {_xyz[0], (_xyz[1] - offset_gravity), _xyz[2]};
     if (pnp_config_.barrel_ptz_offset_y != 0.f) {
       double alpha =
@@ -339,7 +339,6 @@ class PnP {
     }
     angle.x  = static_cast<float>(angle.x) * 180 / CV_PI;
     angle.y  = static_cast<float>(angle.y) * 180 / CV_PI;
-    angle.y -= getPitch(angle.z, xyz[1], _bullet_speed * 1000, _company);
     return angle;
   }
 
