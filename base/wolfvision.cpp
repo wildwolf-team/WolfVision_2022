@@ -28,7 +28,7 @@ WolfVision::WolfVision() try {
   capture_ = std::make_shared<mindvision::VideoCapture>(camera_params);
   if(!capture_->isOpen())
     capture_->open();
-  pnp_     = std::make_unique<basic_pnp::PnP>(fmt::format("{}{}", CONFIG_FILE_PATH, "/camera/mv_camera_config_555.xml"),
+  pnp_     = std::make_unique<basic_pnp::PnP>(fmt::format("{}{}", CONFIG_FILE_PATH, "/camera/mv_camera_config_554.xml"),
                                               fmt::format("{}{}", CONFIG_FILE_PATH, "/angle_solve/basic_pnp_config.xml"));
   buff_    = std::make_unique<basic_buff::Detector>(fmt::format("{}{}", CONFIG_FILE_PATH, "/buff/basic_buff_config.xml"));
   net_armor_ = std::make_unique<basic_net::Detector>();
@@ -120,9 +120,12 @@ void WolfVision::autoAim() {
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[armor_num].pts);
               }
-              if (net_armor_->returnflag() && net_armor_->returninsideflag() && net_armor_->returntimeflag()) {
-             
+              if (net_armor_->returnflag() && net_armor_->returninsideflag() && net_armor_->returntimeflag()) {      
                updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 1);
+              }
+              else{
+               updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
+              }
             }
             else{
              updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
