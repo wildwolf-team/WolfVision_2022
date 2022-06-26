@@ -80,7 +80,7 @@ public:
      * @return std::vector<cv::Point2f> 
      */
     void forecast_armor(const float depth, const int bullet_velocity, cv::Point2f p[4], cv::Mat src_img);
-    bool topAutoShoot(const int depth, const int bullet_velocity, cv::Point2f p[4], const cv::RotatedRect top_armor, cv::Mat src_img);
+    bool topAutoShoot(const float depth, const int bullet_velocity, cv::Point2f p[4], const cv::RotatedRect top_armor, cv::Mat src_img);
     cv::RotatedRect returnArmorRotatedRect() { return last_top_armor; }
    private:
     /**

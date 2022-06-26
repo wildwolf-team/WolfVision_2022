@@ -18,8 +18,8 @@ int Detector::finaly_armor_num(armor_detection& armor){
 }
 
 // 小陀螺自动击打
-bool Detector::topAutoShoot(const int depth, const int bullet_velocity, cv::Point2f p[4], const cv::RotatedRect top_armor, cv::Mat src_img) {
-  double predict_time  = (float(depth) * 0.001 / (bullet_velocity));
+bool Detector::topAutoShoot(const float depth, const int bullet_velocity, cv::Point2f p[4], const cv::RotatedRect top_armor, cv::Mat src_img) {
+  double predict_time  = (float(depth) / (bullet_velocity));
   float T                    = fabs(90 / (c_speed * 180 / CV_PI));
   cv::putText(src_img, std::to_string(T), cv::Point(50, 100), 1, 2, cv::Scalar(0, 255, 0));
   int i = 0;
@@ -34,9 +34,9 @@ bool Detector::topAutoShoot(const int depth, const int bullet_velocity, cv::Poin
   // cv::putText(src_img, std::to_string(diff_time), cv::Point(50, 100), 1, 2, cv::Scalar(0, 255, 0));
   static int last_last_compensate_w;
   static int last_compensate_w;
-  double     s_yaw        = atan2(diff_time * c_speed * float(depth) * 0.001, float(depth) * 0.001);
+  double     s_yaw        = atan2(diff_time * c_speed * float(depth), float(depth));
   if (T > 10) {
-    s_yaw = atan2(predict_time * c_speed * float(depth) * 0.001, float(depth) * 0.001);
+    s_yaw = atan2(predict_time * c_speed * float(depth), float(depth));
   }
   int        compensate_w = 0.5 * tan(s_yaw) * 180 / M_PI;
   // compensate_w            = (last_last_compensate_w + last_compensate_w + compensate_w) * 0.333;
@@ -63,29 +63,24 @@ bool Detector::topAutoShoot(const int depth, const int bullet_velocity, cv::Poin
 }
 
 void Detector::forecast_armor(const float depth, const int bullet_velocity, cv::Point2f p[4], cv::Mat src_img) {
-  double predict_time = (float(depth) * 0.001 / (bullet_velocity));
-  float  response_time = 1;
-  // c_speed -= 1 * c_acc * predict_time;
-  static int last_last_compensate_w;
-  static int last_compensate_w;
-  double p_yaw                       = atan2(response_time * c_speed * float(depth) * 0.001, float(depth) * 0.001);
-  double s_yaw                       = atan2(predict_time * c_speed * float(depth) * 0.001, float(depth) * 0.001);
-  int compensate_w                   = 6 * tan(s_yaw) * 180 / M_PI;
+  double predict_time = (float(depth) / (bullet_velocity));
+  static int last_last_compensate_w = 0.f;
+  static int last_compensate_w = 0.f;
+  double s_yaw                       = atan2(predict_time * c_speed * float(depth), float(depth));
+  int compensate_w                   = 40 * tan(s_yaw) * 180 / M_PI;
   compensate_w                       = (last_last_compensate_w + last_compensate_w + compensate_w) * 0.333;
   last_compensate_w                  = compensate_w;
   last_last_compensate_w             = last_compensate_w;
-  cv::putText(src_img, std::to_string(c_speed), cv::Point(50, 50), 1, 2, cv::Scalar(255, 255, 255));
-  int compensate_p                   = 4 * tan(p_yaw) * 180 / M_PI;
+  cv::putText(src_img, std::to_string(c_speed), cv::Point(50, 50), 3, 6, cv::Scalar(0, 255, 0));
+  cv::putText(src_img, std::to_string(compensate_w), cv::Point(50, 200), 3, 6, cv::Scalar(0, 0, 0));
   static cv::Point2f ss              = cv::Point2f(0, 0);
-  ss                                 = cv::Point2f(-compensate_p - compensate_w, 0);
-  static cv::Point2f aa              = cv::Point2f(-compensate_w, 0);
-  cv::Point2f center                 = (p[0] + p[2]) * 0.5 + aa;
+  ss                                 = cv::Point2f(-compensate_w, 0);
+  cv::Point2f center                 = (p[0] + p[2]) * 0.5 + ss;
   cv::circle(src_img, center, 15, cv::Scalar(0, 255, 255), -1);
   p[0] += ss;
   p[1] += ss;
   p[2] += ss; 
   p[3] += ss;
-  cv::circle(src_img, center + ss, 15, cv::Scalar(255, 0, 255), -1);
 }
 
 void Detector::kalman_init() {

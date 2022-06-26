@@ -74,7 +74,7 @@ class PnP : public abstract_pnp::PnP {
    * @return float
    * @author XX
    */
-  inline int  returnDepth()      { return pnp_info_.z; }
+  inline float  returnDepth()      { return pnp_info_.z; }
   /**
    * @brief 返回目标旋转向量
    *
