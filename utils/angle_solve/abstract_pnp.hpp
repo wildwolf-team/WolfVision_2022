@@ -52,21 +52,21 @@ class PnP {
     r_camera_ptz = cv::Mat(3, 3, CV_64FC1, r_data);
     t_camera_ptz = cv::Mat(3, 1, CV_64FC1, t_data);
 
-    small_object_3d_ = {// 单位：mm
-                        {-66, 27, 0.},
-                        {-66, -27, 0.},
-                        {66, -27, 0.},
-                        {66, 27, 0.}};
-    big_object_3d_   = {// 单位：mm
-                      {-115, 29, 0.},
-                      {-115, -29, 0.},
-                      {115, -29, 0.},
-                      {115, 29, 0.}};
-    buff_object_3d_ = {// 单位：mm
-                      {-115, 29, 0.},
-                      {-115, -29, 0.},
-                      {115, -29, 0.},
-                      {115, 29, 0.}};
+    small_object_3d_ = {// 单位：m
+                        {-0.066, 0.027,  0.},
+                        {-0.066, -0.027, 0.},
+                        {0.066,  -0.027, 0.},
+                        {0.066,  0.027,  0.}};
+    big_object_3d_   = {// 单位：m
+                      {-0.115, 0.029,  0.},
+                      {-0.115, -0.029, 0.},
+                      {0.115,  -0.029, 0.},
+                      {0.115,  0.029,  0.}};
+    buff_object_3d_ = {// 单位：m
+                      {-0.115, 0.029,  0.},
+                      {-0.115, -0.029, 0.},
+                      {0.115,  -0.029, 0.},
+                      {0.115,  0.029,  0.}};
   }
 
   ~PnP() = default;
@@ -270,8 +270,8 @@ class PnP {
    * @param _pos_in_ptz   旋转向量
    * @param _bullet_speed 子弹速度
    * @param _company      子弹下坠单位
-   * @param _depth        距目标的深度(mm)
-   * @return cv::Point3f  返回 Yaw Pitch 轴的偏移量和深度（mm）
+   * @param _depth        距目标的深度(m)
+   * @return cv::Point3f  返回 Yaw Pitch 轴的偏移量和深度（m）
    * @author XX
    */
   cv::Point3f getAngle(const cv::Mat& _pos_in_ptz,
@@ -282,17 +282,20 @@ class PnP {
 
     const double *_xyz  = reinterpret_cast<const double *>(_pos_in_ptz.data);
     double       down_t = 0.f;
-    
-    if (_bullet_speed > 1e-2) {
-      down_t = (sqrt(_xyz[2] * _xyz[2] + _xyz[1] * _xyz[1] + _xyz[0] * _xyz[0])) / static_cast<double>(_bullet_speed * 1000);
-      
-      if (_depth != 0) {
-        down_t = _depth / static_cast<double>(_bullet_speed * 1000);
-      }
-    }
-    // std::cout << "down_t == " << down_t << "\n";
-    int offset_gravity = 0.5 * 9.8 * down_t * down_t * 1000;
+    // 深度计算
+    double distance = sqrt(_xyz[2] * _xyz[2] + _xyz[1] * _xyz[1] + _xyz[0] * _xyz[0]);
+    double distance_xy = sqrt(_xyz[1] * _xyz[1] + _xyz[0] * _xyz[0]);
+    double p_pitch = std::atan2(_xyz[2], distance_xy);
+    // 抛物线计算
+    double a = 9.8 * 9.8 * 0.25;
+    double b = -_bullet_speed * _bullet_speed - distance * 9.8 * cos(M_PI_2 + p_pitch);
+    double c = distance * distance;
+    // 带入求根公式，解出down_t = t^2
+    down_t = (- sqrt(b * b - 4 * a * c) - b) / (2 * a);
+    // h = 0.5 * g * t^2
+    double offset_gravity = 0.5 * 9.8 * down_t;
     double xyz[3]         = {_xyz[0], (_xyz[1] - offset_gravity), _xyz[2]};
+
     if (pnp_config_.barrel_ptz_offset_y != 0.f) {
       double alpha =
         asin(static_cast<double>(pnp_config_.barrel_ptz_offset_y) /
