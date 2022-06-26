@@ -54,19 +54,19 @@ class PnP {
 
     small_object_3d_ = {// 单位：m
                         {-0.066, 0.027,  0.},
-                        {-0.066, -0.027, 0.},
+                        {0.066,  0.027,  0.},
                         {0.066,  -0.027, 0.},
-                        {0.066,  0.027,  0.}};
+                        {-0.066, -0.027, 0.}};
     big_object_3d_   = {// 单位：m
                       {-0.115, 0.029,  0.},
-                      {-0.115, -0.029, 0.},
+                      {0.115,  0.029,  0.},
                       {0.115,  -0.029, 0.},
-                      {0.115,  0.029,  0.}};
+                      {-0.115, -0.029, 0.}};
     buff_object_3d_ = {// 单位：m
                       {-0.115, 0.029,  0.},
-                      {-0.115, -0.029, 0.},
+                      {0.115,  0.029,  0.},
                       {0.115,  -0.029, 0.},
-                      {0.115,  0.029,  0.}};
+                      {-0.115, -0.029, 0.}};
   }
 
   ~PnP() = default;
@@ -294,8 +294,8 @@ class PnP {
     down_t = (- sqrt(b * b - 4 * a * c) - b) / (2 * a);
     // h = 0.5 * g * t^2
     double offset_gravity = 0.5 * 9.8 * down_t;
-    double xyz[3]         = {_xyz[0], (_xyz[1] - offset_gravity), _xyz[2]};
-
+    double xyz[3]         = {_xyz[0], _xyz[1] - offset_gravity, _xyz[2]};
+    
     if (pnp_config_.barrel_ptz_offset_y != 0.f) {
       double alpha =
         asin(static_cast<double>(pnp_config_.barrel_ptz_offset_y) /
@@ -313,7 +313,7 @@ class PnP {
         angle.y = static_cast<float>((beta - alpha));  // camera coordinate
       }
     } else {
-      angle.y = static_cast<float>(atan2(xyz[1], xyz[2]));
+      angle.y = static_cast<float>(atan(xyz[1]/xyz[2]));
     }
 
     if (pnp_config_.barrel_ptz_offset_x != 0.f) {
@@ -334,14 +334,14 @@ class PnP {
         angle.x = static_cast<float>(beta - alpha);  // camera coordinate
       }
     } else {
-      angle.x = static_cast<float>(atan2(xyz[0], xyz[2]));
+      angle.x = static_cast<float>(atan(xyz[0]/xyz[2]));
     }
     angle.z  = static_cast<float>(xyz[2]);
     if (_depth != 0) {
       angle.z = _depth;
     }
-    angle.x  = static_cast<float>(angle.x) * 180 / CV_PI;
-    angle.y  = static_cast<float>(angle.y) * 180 / CV_PI;
+    angle.x  = static_cast<float>(angle.x) * 180 / M_PI;
+    angle.y  = static_cast<float>(angle.y) * 180 / M_PI;
     return angle;
   }
 

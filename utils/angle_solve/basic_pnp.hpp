@@ -98,7 +98,7 @@ class PnP : public abstract_pnp::PnP {
     object_3d_ = initialize3DPoints(_armor_type);
     std::vector<cv::Point2d> pu(p, p + 4);
 
-    cv::solvePnP(object_3d_, pu, cameraMatrix_, distCoeffs_, rvec_, tvec_, false, cv::SOLVEPNP_ITERATIVE);
+    cv::solvePnP(object_3d_, pu, cameraMatrix_, distCoeffs_, rvec_, tvec_, false, cv::SOLVEPNP_IPPE_SQUARE);
 
     cv::Mat     ptz       = cameraPtz(tvec_);
     cv::Point3f angle     = getAngle(ptz, _ballet_speed, 1, _depth);
@@ -135,7 +135,7 @@ class PnP : public abstract_pnp::PnP {
     object_3d_ = initialize3DPoints(_armor_type);
     target_2d_ = initialize2DPoints(_rect);
 
-    cv::solvePnP(object_3d_, target_2d_, cameraMatrix_, distCoeffs_, rvec_, tvec_);
+    cv::solvePnP(object_3d_, target_2d_, cameraMatrix_, distCoeffs_, rvec_, tvec_, false, cv::SOLVEPNP_IPPE_SQUARE);
 
     cv::Mat     ptz   = cameraPtz(tvec_);
     cv::Point3f angle = getAngle(ptz, _ballet_speed, 1, _depth);
@@ -171,7 +171,7 @@ class PnP : public abstract_pnp::PnP {
     object_3d_ = initialize3DPoints(_armor_type);
     target_2d_ = _target_2d;
 
-    cv::solvePnP(object_3d_, target_2d_, cameraMatrix_, distCoeffs_, rvec_, tvec_);
+    cv::solvePnP(object_3d_, target_2d_, cameraMatrix_, distCoeffs_, rvec_, tvec_, false, cv::SOLVEPNP_IPPE_SQUARE);
 
     cv::Mat     ptz   = cameraPtz(tvec_);
     cv::Point3f angle = getAngle(ptz, _ballet_speed, 1, _depth);
