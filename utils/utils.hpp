@@ -15,7 +15,7 @@ struct RoboCmdUartBuff{
   uint8_t  auto_shoot  = 0;
   float    yaw_angle   = 0.f;
   float    pitch_angle = 0.f;
-  uint16_t depth       = 0;
+  // uint16_t depth       = 0;
   uint8_t  crc         = 0;
   uint8_t  end         = (unsigned)'E';
 } __attribute__((packed));
