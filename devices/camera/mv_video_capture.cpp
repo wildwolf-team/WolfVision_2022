@@ -167,4 +167,8 @@ int VideoCapture::getImageRows() {
   return camera_resolution_.rows;
 }
 
+cv::Size VideoCapture::getImageSize() {
+  return cv::Size(camera_resolution_.cols, camera_resolution_.rows);
+}
+
 }  // namespace mindvision

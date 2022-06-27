@@ -39,7 +39,7 @@ WolfVision::WolfVision() try {
     t_ = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     vw_t_ss_ << std::put_time(std::localtime(&t_), "/video/%Y_%m_%d_%H_%M_%S");
     vw_t_str_ = CONFIG_FILE_PATH + vw_t_ss_.str() + ".avi";
-    vw_src_.open(vw_t_str_, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(960, 600), true);  // 记得打开  
+    vw_src_.open(vw_t_str_, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, capture_->getImageSize(), true);  // 记得打开  
   }
 } catch(const std::exception& e) {
   fmt::print("{}\n", e.what());
@@ -134,12 +134,12 @@ void WolfVision::autoAim() {
             break;
           }
       }
+      if (debug_mode_) {
       pool.enqueue([=]() {
-        if (debug_mode_) {
           disData();
           webImage(src_img_);
-        }
       });
+      }
       armor_.rst.clear();
       memset(armor_.quantity, 0, sizeof(armor_.quantity));
       switchMode();
@@ -170,6 +170,7 @@ void WolfVision::disData() {
     debug_info_["pitch"] = pnp_->returnPitchAngle();
     debug_info_["depth"] = pnp_->returnDepth();
     debug_info_["tagret_yaw"] = inf_.yaw_angle.load() - pnp_->returnYawAngle();
+    debug_info_["mode"] = robo_cmd_.data_type.load();
     pj_udp_cl_->send_message(debug_info_.dump());
     debug_info_.empty();
 }
@@ -203,7 +204,7 @@ void WolfVision::webImage(const cv::Mat _src_img) {
 void WolfVision::updataWriteData(RoboCmd& _robo_cmd, const float _yaw, const float _pitch, const int _depth, const int _data_type, const int _auto_shoot) {
   _robo_cmd.yaw_angle.store(-_yaw);
   _robo_cmd.pitch_angle.store(_pitch);
-  _robo_cmd.depth.store(_depth);
+  _robo_cmd.depth.store(_depth*1000);
   _robo_cmd.data_type.store(_data_type > 1 ? 1 : _data_type);
   _robo_cmd.auto_shoot.store(_auto_shoot);
 }
