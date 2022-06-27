@@ -50,6 +50,7 @@ WolfVision::~WolfVision() {}
 
 void WolfVision::autoAim() {
   auto start = std::chrono::system_clock::now();
+  ThreadPool pool(4);
   while (true) {
     is_shoot_ = false;
     if (capture_->isOpen()) {
@@ -89,6 +90,7 @@ void WolfVision::autoAim() {
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[0].pts);
               }
+              pitch_ = pnp_->returnPitchAngle();
               net_armor_->forecastFlagV(armor_.armor_t, inf_.yaw_angle.load() - pnp_->returnYawAngle(), inf_.pitch_angle.load() + pnp_->returnPitchAngle());
               is_shoot_ = net_armor_->topAutoShoot(pnp_->returnDepth(), robo_inf_.bullet_velocity.load(), armor_.rst[0].pts, net_armor_->returnArmorRotatedRect(), src_img_);
               if (armor_.rst[0].tag_id == 1 || armor_.rst[0].tag_id == 0) {
@@ -97,7 +99,7 @@ void WolfVision::autoAim() {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, net_armor_->returnArmorRotatedRect());
               }
             }
-            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), is_shoot_);
+            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pitch_, pnp_->returnDepth(), armor_.rst.size(), is_shoot_);
             break;
           }
           case Mode::FORECAST_MODE: {
@@ -134,10 +136,12 @@ void WolfVision::autoAim() {
             break;
           }
       }
-      if (debug_mode_) {
-        disData();
-        webImage(src_img_);
-      }
+      pool.enqueue([=]() {
+        if (debug_mode_) {
+          disData();
+          webImage(src_img_);
+        }
+      });
       armor_.rst.clear();
       memset(armor_.quantity, 0, sizeof(armor_.quantity));
       switchMode();
