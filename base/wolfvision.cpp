@@ -41,7 +41,6 @@ WolfVision::WolfVision() try {
     vw_t_str_ = CONFIG_FILE_PATH + vw_t_ss_.str() + ".avi";
     vw_src_.open(vw_t_str_, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(960, 600), true);  // 记得打开  
   }
-
 } catch(const std::exception& e) {
   fmt::print("{}\n", e.what());
 }
@@ -50,6 +49,7 @@ WolfVision::~WolfVision() {}
 
 void WolfVision::autoAim() {
   auto start = std::chrono::system_clock::now();
+  ThreadPool pool(4);
   while (true) {
     is_shoot_ = false;
     if (capture_->isOpen()) {
@@ -77,7 +77,6 @@ void WolfVision::autoAim() {
           case Mode::ENERGY_AGENCY: {
             // std::cout << " is ENERGY_AGENCY mode " << std::endl;
             buff_->runTask(src_img_, robo_inf_, robo_cmd_, time);
-            // webImage(_streamer_ptr, buff_->returnBinImage(), params);
             break;
           }
           case Mode::TOP_MODE: {
@@ -89,6 +88,7 @@ void WolfVision::autoAim() {
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[0].pts);
               }
+              pitch_ = pnp_->returnPitchAngle();
               net_armor_->forecastFlagV(armor_.armor_t, inf_.yaw_angle.load() - pnp_->returnYawAngle(), inf_.pitch_angle.load() + pnp_->returnPitchAngle());
               is_shoot_ = net_armor_->topAutoShoot(pnp_->returnDepth(), robo_inf_.bullet_velocity.load(), armor_.rst[0].pts, net_armor_->returnArmorRotatedRect(), src_img_);
               if (armor_.rst[0].tag_id == 1 || armor_.rst[0].tag_id == 0) {
@@ -97,7 +97,7 @@ void WolfVision::autoAim() {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, net_armor_->returnArmorRotatedRect());
               }
             }
-            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), is_shoot_);
+            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pitch_, pnp_->returnDepth(), armor_.rst.size(), is_shoot_);
             break;
           }
 
@@ -167,10 +167,12 @@ void WolfVision::autoAim() {
             break;
           }
       }
-      if (debug_mode_) {
-        disData();
-        webImage(src_img_);
-      }
+      pool.enqueue([=]() {
+        if (debug_mode_) {
+          disData();
+          webImage(src_img_);
+        }
+      });
       armor_.rst.clear();
       memset(armor_.quantity, 0, sizeof(armor_.quantity));
       switchMode();

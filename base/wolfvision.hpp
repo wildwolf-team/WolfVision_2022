@@ -28,12 +28,14 @@
 #include "module/net/basic_net.h"
 #include "unistd.h"
 #include "utils/angle_solve/basic_pnp.hpp"
-#include "utils/fps.hpp"
-#include "utils/mjpeg_streamer.hpp"
+#include "utils/simple_cpp_sockets.hpp"
 #include "utils/reset_mv_camera.hpp"
+#include "utils/mjpeg_streamer.hpp"
+#include "utils/ThreadPool.h"
 #include "utils/utils.hpp"
 #include "utils/json.hpp"
-#include "utils/simple_cpp_sockets.hpp"
+#include "utils/fps.hpp"
+
 
 auto idntifier = fmt::format(fg(fmt::color::green) | fmt::emphasis::bold, "wolfvision");
 
@@ -59,7 +61,7 @@ class WolfVision
     nlohmann::json debug_info_;
     nlohmann::json config_json_;
     std::vector<int> params_;
-
+    
   private:
     void autoAim();
     void switchMode();
@@ -72,15 +74,16 @@ class WolfVision
     int other_num_       = 0;
     int camera_exposure_ = 0;
     int buff_exposure_   = 0;
-    float yaw_power_     = 0;
+    float yaw_power_     = 0.f;
+    float pitch_         = 0.f;
     bool debug_mode_     = false;
     
   private:
-    cv::VideoWriter vw_src_;
-    time_t t_;
-    std::stringstream vw_t_ss_;
     std::string       vw_t_str_;
+    std::stringstream vw_t_ss_;
+    cv::VideoWriter   vw_src_;
     bool vw_mode_ = false;
+    time_t t_;
 
   private:
     cv::Mat src_img_;
