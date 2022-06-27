@@ -107,13 +107,13 @@ void Detector::runTask(cv::Mat& _input_img, const RoboInf& _receive_info, RoboCm
   runImage(src_img_, _receive_info.robot_color.load());
 
   // 查找目标
-  findTarget(draw_img_, bin_color_img, target_box_);
+  findTarget(_input_img, bin_color_img, target_box_);
 
   // 判断目标是否为空
-  is_find_target_ = isFindTarget(draw_img_, target_box_);
+  is_find_target_ = isFindTarget(_input_img, target_box_);
 
   // 查找圆心
-  final_center_r_ = findCircleR(src_img_, bin_color_img, draw_img_, is_find_target_);
+  final_center_r_ = findCircleR(src_img_, bin_color_img, _input_img, is_find_target_);
 
   // 计算运转状态值：速度、方向、角度
   judgeCondition(is_find_target_);
@@ -130,21 +130,12 @@ void Detector::runTask(cv::Mat& _input_img, const RoboInf& _receive_info, RoboCm
   final_forecast_quantity_ = doPredict(static_cast<float>(_receive_info.bullet_velocity), is_find_target_);
 
   // 计算获取最终目标（矩形、顶点）
-  calculateTargetPointSet(final_forecast_quantity_, final_center_r_, target_2d_point_, draw_img_, is_find_target_);
+  calculateTargetPointSet(final_forecast_quantity_, final_center_r_, target_2d_point_, _input_img, is_find_target_);
 
   // 计算云台角度
   if (is_find_target_) {
     // 计算云台角度
-    buff_pnp_.solvePnP(29, 2, target_2d_point_, final_target_z_);
-    // _send_info.yaw_angle   = angleCalculation(pre_center_, 0.0048, src_img_.size(), 8).x;
-    // _send_info.pitch_angle = angleCalculation(pre_center_, 0.0048, src_img_.size(), 8).y;
-    // cv::Point yaw_angle    = cv::Point(draw_img_.cols - 100, 60);
-    // cv::putText(draw_img_, std::to_string(_send_info.yaw_angle), yaw_angle, cv::FONT_HERSHEY_PLAIN, 1, cv::Scalar(255, 255, 0), 1, 8, false);
-    // cv::Point pitch_angle = cv::Point(draw_img_.cols - 100, 70);
-    // cv::putText(draw_img_, std::to_string(_send_info.pitch_angle), pitch_angle, cv::FONT_HERSHEY_PLAIN, 1, cv::Scalar(25, 255, 255), 1, 8, false);
-
-    // _send_info.yaw_angle   = -(buff_pnp_.returnYawAngle() - 1.3);
-    // _send_info.pitch_angle = buff_pnp_.returnPitchAngle() - 1.5;
+    buff_pnp_.solvePnP(_receive_info.bullet_velocity.load(), 2, target_2d_point_, final_target_z_);
     _send_info.yaw_angle   = -(buff_pnp_.returnYawAngle() - buff_param_.OFFSET_ARMOR_YAW);
     _send_info.pitch_angle = buff_pnp_.returnPitchAngle() - buff_param_.OFFSET_ARMOR_PITCH;
     _send_info.depth       = final_target_z_;
@@ -339,9 +330,9 @@ float Detector::doPredict(const float& _bullet_velocity, const bool& _is_find_ta
   float predict_quantity = 0.f;
 
   // 计算固定预测量 原来是给0.35弧度 TODO(fqjun) :测一下最快和最慢速度时的提前量，以确定范围 predict_quantity = fixedPredict(_bullet_velocity*1000);
-  predict_quantity = fixedPredict(29 * 1000);  // 默认先给28m/s
+  predict_quantity = fixedPredict(_bullet_velocity * 1000);  // 默认先给28m/s
 
-  // 计算移动预测量 TODO(fqjun)
+  // 计算移动预测量
 
   fmt::print("[{}] Info, 提前了: {} 度 \n", predict_yellow, predict_quantity * 180 / CV_PI);
 

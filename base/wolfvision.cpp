@@ -41,7 +41,6 @@ WolfVision::WolfVision() try {
     vw_t_str_ = CONFIG_FILE_PATH + vw_t_ss_.str() + ".avi";
     vw_src_.open(vw_t_str_, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), 30, cv::Size(960, 600), true);  // 记得打开  
   }
-
 } catch(const std::exception& e) {
   fmt::print("{}\n", e.what());
 }
@@ -78,7 +77,6 @@ void WolfVision::autoAim() {
           case Mode::ENERGY_AGENCY: {
             // std::cout << " is ENERGY_AGENCY mode " << std::endl;
             buff_->runTask(src_img_, robo_inf_, robo_cmd_, time);
-            // webImage(_streamer_ptr, buff_->returnBinImage(), params);
             break;
           }
           case Mode::TOP_MODE: {
