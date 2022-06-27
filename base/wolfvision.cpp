@@ -73,7 +73,7 @@ void WolfVision::autoAim() {
         sync();
       }
 
-      switch (robo_inf_.model) {
+      switch (/*robo_inf_.model*/6) {
           case Mode::ENERGY_AGENCY: {
             // std::cout << " is ENERGY_AGENCY mode " << std::endl;
             buff_->runTask(src_img_, robo_inf_, robo_cmd_, time);
@@ -149,8 +149,11 @@ void WolfVision::autoAim() {
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[0].pts);
               }
+                  updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 1);
             }
+            else{
             updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
+            }
             break;
           }
           default: {
