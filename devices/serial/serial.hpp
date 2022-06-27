@@ -24,7 +24,7 @@ class RoboSerial : public serial::Serial {
     RoboCmdUartBuff robo_cmd_uart_temp;
     robo_cmd_uart_temp.yaw_angle   = robo_cmd.yaw_angle.load();
     robo_cmd_uart_temp.pitch_angle = robo_cmd.pitch_angle.load();
-    robo_cmd_uart_temp.depth       = robo_cmd.depth.load();
+    // robo_cmd_uart_temp.depth       = robo_cmd.depth.load();
     robo_cmd_uart_temp.data_type   = robo_cmd.data_type.load();
     robo_cmd_uart_temp.auto_shoot  = robo_cmd.auto_shoot.load();
     robo_cmd_uart_temp.crc = checksumCRC((uint8_t*)&(robo_cmd_uart_temp) + 1, sizeof(robo_cmd_uart_temp) - 3);
@@ -47,7 +47,7 @@ class RoboSerial : public serial::Serial {
       } else {
         robo_inf.robot_color.store(Color::BLUE);
       }
-      robo_inf.bullet_velocity.store(int(robo_inf_uart_temp.bullet_velocity)-1);
+      robo_inf.bullet_velocity.store(int(robo_inf_uart_temp.bullet_velocity)-2);
       if (robo_inf.bullet_velocity < 10 || robo_inf.bullet_velocity > 30) {
         robo_inf.bullet_velocity.store(15);
       }

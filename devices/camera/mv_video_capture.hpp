@@ -40,7 +40,7 @@ enum RESOLUTION {
   RESOLUTION_1280_X_800,
   RESOLUTION_1280_X_768,
   RESOLUTION_960_X_600,
-  RESOLUTION_640_X_480,
+  RESOLUTION_640_X_384,
 };
 
 struct Camera_Resolution {
@@ -65,9 +65,9 @@ struct Camera_Resolution {
         cols = 960;
         rows = 600;
         break;
-      case mindvision::RESOLUTION::RESOLUTION_640_X_480:
+      case mindvision::RESOLUTION::RESOLUTION_640_X_384:
         cols = 640;
-        rows = 480;
+        rows = 384;
         break;
       default:
         cols = 1280;
@@ -136,6 +136,9 @@ class VideoCapture {
   int getImageCols();
 
   int getImageRows();
+
+  cv::Size getImageSize();
+
 
  private:
   std::mutex mtx;
