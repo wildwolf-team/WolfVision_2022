@@ -84,5 +84,6 @@
         "openglsupport": "cpp",
         "core": "cpp",
         "geometry": "cpp"
-    }
+    },
+    "ros.distro": "melodic"
 }

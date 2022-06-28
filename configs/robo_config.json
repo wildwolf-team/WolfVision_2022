@@ -1,9 +1,9 @@
 {
-    "pj_udp_cl_ip": "127.0.0.1",
+    "pj_udp_cl_ip": "172.22.134.71",
     "pj_udp_cl_port": 9870,
-    "camera_exposure_time": 400,
+    "camera_exposure_time": 10000,
     "buff_exposure": 1200,
     "yaw_power": 0.94,
-    "vw_mode": false,
+    "vw_mode": false,    
     "debug_mode": true
 }

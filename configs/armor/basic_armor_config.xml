@@ -1,4 +1,9 @@
 <?xml version="1.0"?>
+
+<!--
+ 调参查看数据
+-->
+
 <opencv_storage>
 <!--
   GRAY_EDIT - 是否调整灰度图参数

@@ -7,27 +7,29 @@ int main() {
 }
 
 WolfVision::WolfVision() try {
-	serial_ = std::make_unique<RoboSerial>("/dev/ttyUSB0", 115200);
+	serial_ = std::make_unique<RoboSerial>("/dev/ttyUSB0", 115200);  // list_ports_linux.cc
 
   streamer_ptr_ = std::make_unique<nadjieb::MJPEGStreamer>();
   streamer_ptr_->start(8080, fmt::format("{}{}", SOURCE_PATH, "/utils/streamer.html"));
   std::ifstream config_is(fmt::format("{}{}", CONFIG_FILE_PATH, "/robo_config.json"));
+
+  // robo_config.json
   config_is >> config_json_;
   pj_udp_cl_ = std::make_unique<UDPClient>(
       config_json_["pj_udp_cl_port"].get<int>(),
-      config_json_["pj_udp_cl_ip"].get<std::string>());
+      config_json_["pj_udp_cl_ip"].get<std::string>());  
   params_ = {cv::IMWRITE_JPEG_QUALITY, 100};
-
-  vw_mode_ = config_json_["vw_mode"];
-  debug_mode_ = config_json_["debug_mode"];
-
-  camera_exposure_ = config_json_["camera_exposure_time"].get<int>();
-  buff_exposure_   = config_json_["buff_exposure"].get<int>();
+  vw_mode_ = config_json_["vw_mode"];  
+  debug_mode_ = config_json_["debug_mode"];  
+  camera_exposure_ = config_json_["camera_exposure_time"].get<int>(); // 曝光
+  buff_exposure_   = config_json_["buff_exposure"].get<int>(); // 大符曝光
   yaw_power_       = config_json_["yaw_power"].get<float>();
+
   mindvision::CameraParam camera_params(0, mindvision::RESOLUTION_1280_X_768, camera_exposure_);
   capture_ = std::make_shared<mindvision::VideoCapture>(camera_params);
   if(!capture_->isOpen())
     capture_->open();
+
   pnp_     = std::make_unique<basic_pnp::PnP>(fmt::format("{}{}", CONFIG_FILE_PATH, "/camera/mv_camera_config_554.xml"),
                                               fmt::format("{}{}", CONFIG_FILE_PATH, "/angle_solve/basic_pnp_config.xml"));
   buff_    = std::make_unique<basic_buff::Detector>(fmt::format("{}{}", CONFIG_FILE_PATH, "/buff/basic_buff_config.xml"));
@@ -35,7 +37,8 @@ WolfVision::WolfVision() try {
   net_armor_->detection_init(fmt::format("{}{}", CONFIG_FILE_PATH, "/net/opt4_FP16.xml"), "GPU");
   armor_.rst.reserve(128);
   pnp_->serYawPower(yaw_power_);
-  if (vw_mode_) {
+
+  if (vw_mode_) {  // 赛场记得开 robo_config.json
     t_ = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     vw_t_ss_ << std::put_time(std::localtime(&t_), "/video/%Y_%m_%d_%H_%M_%S");
     vw_t_str_ = CONFIG_FILE_PATH + vw_t_ss_.str() + ".avi";
@@ -48,21 +51,24 @@ WolfVision::WolfVision() try {
 WolfVision::~WolfVision() {}
 
 void WolfVision::autoAim() {
-  auto start = std::chrono::system_clock::now();
-  ThreadPool pool(4);
+  auto start = std::chrono::system_clock::now(); // 计时 start end time
+  ThreadPool pool(4); 
   while (true) {
     is_shoot_ = false;
+    shoot = 0;
     if (capture_->isOpen()) {
 
       *capture_>>src_img_;
 
       auto end  = std::chrono::system_clock::now();
       float time = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() * 0.001);
+      
       if (debug_mode_) {
         static float last_time = 0;
         fmt::print("[{}] fps == : {} \n", idntifier, 1/(time - last_time));
         last_time = time;
       }
+
       armor_.armor_t = time;     
       inf_.yaw_angle = robo_inf_.yaw_angle.load();
       inf_.pitch_angle = robo_inf_.pitch_angle.load();
@@ -83,7 +89,7 @@ void WolfVision::autoAim() {
             // std::cout << "Mode::TOP_MODE" << "\n";
             net_armor_->process_frame(src_img_, armor_);
             if (net_armor_->screen_top_armor(robo_inf_, armor_, src_img_)) {
-              if (armor_.rst[0].tag_id == 1 || armor_.rst[0].tag_id == 0) {
+              if (armor_.rst[0].tag_id == 1 || armor_.rst[0].tag_id == 0) { // 英雄或哨兵
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 1, armor_.rst[0].pts);
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[0].pts);
@@ -149,10 +155,11 @@ void WolfVision::autoAim() {
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[0].pts);
               }
-                  updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 1);
+              shoot = 1;
+              updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
             }
             else{
-            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
+            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
             }
             break;
           }
@@ -173,7 +180,7 @@ void WolfVision::autoAim() {
       if (debug_mode_) {
       pool.enqueue([=]() {
           disData();
-          webImage(src_img_);
+          webImage(src_img_); // 网页可视化
       });
       }
       armor_.rst.clear();
@@ -200,6 +207,7 @@ void WolfVision::spin() {
   }
 }
 
+// plotjuggler
 void WolfVision::disData() {
     debug_info_["imu_yaw"] = inf_.yaw_angle.load();
     debug_info_["yaw"] = pnp_->returnYawAngle();
@@ -207,6 +215,7 @@ void WolfVision::disData() {
     debug_info_["depth"] = pnp_->returnDepth();
     debug_info_["tagret_yaw"] = inf_.yaw_angle.load() - pnp_->returnYawAngle();
     debug_info_["mode"] = robo_cmd_.data_type.load();
+    debug_info_['shoot'] = float(shoot);
     pj_udp_cl_->send_message(debug_info_.dump());
     debug_info_.empty();
 }
@@ -240,7 +249,7 @@ void WolfVision::webImage(const cv::Mat _src_img) {
 void WolfVision::updataWriteData(RoboCmd& _robo_cmd, const float _yaw, const float _pitch, const int _depth, const int _data_type, const int _auto_shoot) {
   _robo_cmd.yaw_angle.store(_yaw);
   _robo_cmd.pitch_angle.store(_pitch);
-  _robo_cmd.depth.store(_depth*1000);
+  _robo_cmd.depth.store(_depth*1000); // m
   _robo_cmd.data_type.store(_data_type > 1 ? 1 : _data_type);
   _robo_cmd.auto_shoot.store(_auto_shoot);
 }
