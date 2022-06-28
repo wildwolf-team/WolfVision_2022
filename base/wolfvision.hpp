@@ -89,6 +89,7 @@ class WolfVision
     cv::Mat src_img_;
     cv::Mat write_img_;
     bool is_shoot_ = false;
+    int shoot = 0;
 
   public:
     void spin();

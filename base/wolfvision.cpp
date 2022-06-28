@@ -52,6 +52,7 @@ void WolfVision::autoAim() {
   ThreadPool pool(4);
   while (true) {
     is_shoot_ = false;
+    shoot = 0;
     if (capture_->isOpen()) {
 
       *capture_>>src_img_;
@@ -102,6 +103,7 @@ void WolfVision::autoAim() {
           }
 
           case Mode::SENTINEL_AUTONOMOUS_MODE:
+        
             net_armor_->process_frame(src_img_, armor_);
             if (net_armor_->screen_armor(robo_inf_, armor_, src_img_)) {
               int armor_num = net_armor_->finaly_armor_num(armor_);
@@ -120,15 +122,21 @@ void WolfVision::autoAim() {
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[armor_num].pts);
               }
-              if (net_armor_->returnflag() && net_armor_->returninsideflag() && net_armor_->returntimeflag()) {      
-               updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 1);
-              }
-              else{
-               updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
-              }
+              // if (net_armor_->returnflag() && net_armor_->returninsideflag() && net_armor_->returntimeflag()) {      
+              //  shoot = 1;
+              //  std::cout << "1" << std::endl;
+              //  updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
+              //   }
+              // else{
+              std::cout << "0" << std::endl;
+              //  updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
+              // }
+              shoot = 1;
+              updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
             }
             else{
-             updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
+              std::cout << "0" << std::endl;
+             updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
             }
             break;
           
@@ -149,10 +157,11 @@ void WolfVision::autoAim() {
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[0].pts);
               }
-                  updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 1);
+              shoot = 1;  
+              updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
             }
             else{
-            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
+            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
             }
             break;
           }
@@ -207,6 +216,8 @@ void WolfVision::disData() {
     debug_info_["depth"] = pnp_->returnDepth();
     debug_info_["tagret_yaw"] = inf_.yaw_angle.load() - pnp_->returnYawAngle();
     debug_info_["mode"] = robo_cmd_.data_type.load();
+    debug_info_["shoot"] = float(shoot);
+      std::cout << shoot << std::endl;   
     pj_udp_cl_->send_message(debug_info_.dump());
     debug_info_.empty();
 }
