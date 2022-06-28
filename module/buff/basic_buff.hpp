@@ -14,7 +14,7 @@
 #include "utils/kalman.h"
 #include "utils/roi.hpp"
 #include "utils/utils.hpp"
-
+using namespace std::chrono_literals;
 namespace basic_buff {
 constexpr int S                   = 2;
 auto          idntifier_green     = fmt::format(fg(fmt::color::green) | fmt::emphasis::bold, "basic_buff");
@@ -192,7 +192,9 @@ class Detector {
   _Kalman::Matrix_xxd R;
   _Kalman::Matrix_zzd Q{1};
   _Kalman::Matrix_x1d init{0, 0};
-
+  std::chrono::_V2::system_clock::time_point shoot_time_;
+  std::chrono::_V2::system_clock::time_point last_shoot_time_;
+  float  shoot_interval_ = 0.f;
   double c_speed = 0.0;
   /**
        * @brief 卡尔曼参数初始化
