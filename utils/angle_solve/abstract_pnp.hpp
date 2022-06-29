@@ -277,24 +277,38 @@ class PnP {
   cv::Point3f getAngle(const cv::Mat& _pos_in_ptz,
                        const int      _bullet_speed,
                        const int      _company,
-                       const int      _depth) {
+                       const float    _depth) {
     cv::Point3f angle;
-
+    
     const double *_xyz  = reinterpret_cast<const double *>(_pos_in_ptz.data);
     double       down_t = 0.f;
     // 深度计算
     double distance = sqrt(_xyz[2] * _xyz[2] + _xyz[1] * _xyz[1] + _xyz[0] * _xyz[0]);
-    double distance_xy = sqrt(_xyz[1] * _xyz[1] + _xyz[0] * _xyz[0]);
-    double p_pitch = std::atan2(_xyz[2], distance_xy);
-    // 抛物线计算
-    double a = 9.8 * 9.8 * 0.25;
-    double b = -_bullet_speed * _bullet_speed - distance * 9.8 * cos(M_PI_2 + p_pitch);
-    double c = distance * distance;
-    // 带入求根公式，解出down_t = t^2
-    down_t = (- sqrt(b * b - 4 * a * c) - b) / (2 * a);
-    // h = 0.5 * g * t^2
+    if (_depth != 0) {
+      distance = _depth;
+    }
+    // std::cout << "distance == " << distance << std::endl;
+    if (_bullet_speed < 20) {
+      down_t = distance / static_cast<double>(_bullet_speed);
+      down_t = down_t * down_t;
+    } else {
+      double distance_xy = sqrt(_xyz[1] * _xyz[1] + _xyz[0] * _xyz[0]);
+      double p_pitch = std::atan2(_xyz[2], distance_xy);
+      // 抛物线计算
+      double a = 9.8 * 9.8 * 0.25;
+      double b = -_bullet_speed * _bullet_speed - distance * 9.8 * cos(M_PI_2 + p_pitch);
+      double c = distance * distance;
+      // 带入求根公式，解出down_t = t^2
+      down_t = (- sqrt(b * b - 4 * a * c) - b) / (2 * a);
+      // h = 0.5 * g * t^2
+    }
+    // std::cout << "down_t == " << down_t << std::endl;
     double offset_gravity = 0.5 * 9.8 * down_t;
+    // std::cout << "offset_gravity == " << offset_gravity << std::endl;
     double xyz[3]         = {_xyz[0], _xyz[1] - offset_gravity, _xyz[2]};
+    if (_depth != 0) {
+      xyz[2] = _depth;
+    }
     
     if (pnp_config_.barrel_ptz_offset_y != 0.f) {
       double alpha =
@@ -313,7 +327,7 @@ class PnP {
         angle.y = static_cast<float>((beta - alpha));  // camera coordinate
       }
     } else {
-      angle.y = static_cast<float>(atan(xyz[1]/xyz[2]));
+      angle.y = static_cast<float>(atan2(xyz[1], xyz[2]));
     }
 
     if (pnp_config_.barrel_ptz_offset_x != 0.f) {
@@ -334,7 +348,7 @@ class PnP {
         angle.x = static_cast<float>(beta - alpha);  // camera coordinate
       }
     } else {
-      angle.x = static_cast<float>(atan(xyz[0]/xyz[2]));
+      angle.x = static_cast<float>(atan2(xyz[0], xyz[2]));
     }
     angle.z  = static_cast<float>(xyz[2]);
     if (_depth != 0) {

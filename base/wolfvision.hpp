@@ -61,7 +61,7 @@ class WolfVision
     nlohmann::json debug_info_;
     nlohmann::json config_json_;
     std::vector<int> params_;
-    
+
   private:
     void autoAim();
     void switchMode();
@@ -76,8 +76,9 @@ class WolfVision
     int buff_exposure_   = 0;
     float yaw_power_     = 0.f;
     float pitch_         = 0.f;
+    float depth_         = 0.f;
     bool debug_mode_     = false;
-    
+
   private:
     std::string       vw_t_str_;
     std::stringstream vw_t_ss_;

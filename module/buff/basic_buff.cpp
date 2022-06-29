@@ -2,8 +2,8 @@
 
 namespace basic_buff {
 
-Detector::Detector(const std::string& _buff_config_address) {
-  cv::FileStorage fs_buff(_buff_config_address, cv::FileStorage::READ);
+Detector::Detector(const std::string& _buff_config_path) {
+  cv::FileStorage fs_buff(_buff_config_path, cv::FileStorage::READ);
   // 初始化基本参数
   fs_buff["GRAY_EDIT"] >> image_config_.gray_edit;
   fs_buff["COLOR_EDIT"] >> image_config_.color_edit;
@@ -135,7 +135,7 @@ void Detector::runTask(cv::Mat& _input_img, const RoboInf& _receive_info, RoboCm
   // 计算云台角度
   if (is_find_target_) {
     // 计算云台角度
-    buff_pnp_.solvePnP(_receive_info.bullet_velocity.load(), 2, target_2d_point_, final_target_z_);
+    buff_pnp_.solvePnP(_receive_info.bullet_velocity.load(), 2, target_2d_point_, final_target_z_*0.001);
     _send_info.yaw_angle.store(-(buff_pnp_.returnYawAngle() - buff_param_.OFFSET_ARMOR_YAW));
     _send_info.pitch_angle.store(buff_pnp_.returnPitchAngle() - buff_param_.OFFSET_ARMOR_PITCH);
     _send_info.depth.store(final_target_z_);

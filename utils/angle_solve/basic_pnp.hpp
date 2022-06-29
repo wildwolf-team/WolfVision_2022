@@ -94,7 +94,7 @@ class PnP : public abstract_pnp::PnP {
    * @param _rect         目标旋转矩形
    * @author XX
    */
-  void solvePnP(const int _ballet_speed, const int _armor_type, const cv::Point2f p[4], const int _depth = 0) {
+  void solvePnP(const int _ballet_speed, const int _armor_type, const cv::Point2f p[4], const float _depth = 0.f) {
     object_3d_ = initialize3DPoints(_armor_type);
     std::vector<cv::Point2d> pu(p, p + 4);
 
@@ -102,7 +102,7 @@ class PnP : public abstract_pnp::PnP {
 
     cv::Mat     ptz       = cameraPtz(tvec_);
     cv::Point3f angle     = getAngle(ptz, _ballet_speed, 1, _depth);
-    pnp_info_.x *= yaw_power_;
+    angle.x *= yaw_power_;
     pnp_info_.x = angle.x + pnp_config_.offset_armor_yaw;
     pnp_info_.y = angle.y + pnp_config_.offset_armor_pitch;
     pnp_info_.z = angle.z;
@@ -131,7 +131,7 @@ class PnP : public abstract_pnp::PnP {
   void solvePnP(const int             _ballet_speed,
                 const int             _armor_type,
                 const cv::RotatedRect _rect, 
-                const int             _depth = 0) {
+                const float           _depth = 0.f) {
     object_3d_ = initialize3DPoints(_armor_type);
     target_2d_ = initialize2DPoints(_rect);
 
@@ -139,7 +139,7 @@ class PnP : public abstract_pnp::PnP {
 
     cv::Mat     ptz   = cameraPtz(tvec_);
     cv::Point3f angle = getAngle(ptz, _ballet_speed, 1, _depth);
-    pnp_info_.x *= yaw_power_;
+    angle.x *= yaw_power_;
     pnp_info_.x = angle.x + pnp_config_.offset_armor_yaw;
     pnp_info_.y = angle.y + pnp_config_.offset_armor_pitch;
     pnp_info_.z = angle.z;
@@ -167,7 +167,7 @@ class PnP : public abstract_pnp::PnP {
   void solvePnP(const int                      _ballet_speed,
                 const int                      _armor_type,
                 const std::vector<cv::Point2f> _target_2d,
-                const int                      _depth = 0) {
+                const float                    _depth = 0.f) {
     object_3d_ = initialize3DPoints(_armor_type);
     target_2d_ = _target_2d;
 
@@ -175,9 +175,8 @@ class PnP : public abstract_pnp::PnP {
 
     cv::Mat     ptz   = cameraPtz(tvec_);
     cv::Point3f angle = getAngle(ptz, _ballet_speed, 1, _depth);
-    pnp_info_.x *= yaw_power_;
-    pnp_info_.x = angle.x + pnp_config_.offset_armor_yaw;
-    pnp_info_.y = angle.y + pnp_config_.offset_armor_pitch;
+    pnp_info_.x = angle.x;
+    pnp_info_.y = angle.y;
     pnp_info_.z = angle.z;
     
     object_3d_.clear();
