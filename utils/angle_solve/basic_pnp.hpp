@@ -178,7 +178,12 @@ class PnP : public abstract_pnp::PnP {
     pnp_info_.x = angle.x;
     pnp_info_.y = angle.y;
     pnp_info_.z = angle.z;
-    
+    if (fabs(pnp_info_.x) > 30) {
+      pnp_info_.x = 0;
+    }
+    if (fabs(pnp_info_.y) > 15) {
+      pnp_info_.y = 0;
+    }
     object_3d_.clear();
     object_3d_.shrink_to_fit();
     target_2d_.clear();
