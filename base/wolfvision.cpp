@@ -94,22 +94,16 @@ void WolfVision::autoAim() {
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[0].pts);
               }
-              // 当装甲板正面时更新深度
-              float error_angle = atan((armor_.rst[0].pts[3].y - armor_.rst[0].pts[0].y) /
-                                       (armor_.rst[0].pts[3].x - armor_.rst[0].pts[0].x));
-              error_angle = atan(error_angle) * 180 / M_PI;
-              if (fabs(error_angle) < 0.5f) {
-                depth_ = pnp_->returnDepth();
-              }
+              pitch_ = pnp_->returnPitchAngle();
               net_armor_->forecastFlagV(armor_.armor_t, inf_.yaw_angle.load() - pnp_->returnYawAngle(), inf_.pitch_angle.load() + pnp_->returnPitchAngle());
               is_shoot_ = net_armor_->topAutoShoot(pnp_->returnDepth(), robo_inf_.bullet_velocity.load(), armor_.rst[0].pts, net_armor_->returnArmorRotatedRect(), src_img_);
               if (armor_.rst[0].tag_id == 1 || armor_.rst[0].tag_id == 0) {
-                pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 1, net_armor_->returnArmorRotatedRect(), depth_);
+                pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 1, net_armor_->returnArmorRotatedRect());
               } else {
-                pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, net_armor_->returnArmorRotatedRect(), depth_);
+                pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, net_armor_->returnArmorRotatedRect());
               }
             }
-            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), depth_, armor_.rst.size(), is_shoot_);
+            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pitch_, pnp_->returnDepth(), armor_.rst.size(), is_shoot_);
             break;
           }
 
@@ -163,7 +157,8 @@ void WolfVision::autoAim() {
               }
               shoot = 1;
               updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
-            }else{
+            }
+            else{
             updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
             }
             break;
@@ -215,9 +210,9 @@ void WolfVision::spin() {
 // plotjuggler
 void WolfVision::disData() {
     debug_info_["imu_yaw"] = inf_.yaw_angle.load();
-    debug_info_["yaw"] = robo_cmd_.yaw_angle.load();
-    debug_info_["pitch"] = robo_cmd_.pitch_angle.load();
-    debug_info_["depth"] = robo_cmd_.depth.load();
+    debug_info_["yaw"] = pnp_->returnYawAngle();
+    debug_info_["pitch"] = pnp_->returnPitchAngle();
+    debug_info_["depth"] = pnp_->returnDepth();
     debug_info_["tagret_yaw"] = inf_.yaw_angle.load() - pnp_->returnYawAngle();
     debug_info_["mode"] = robo_cmd_.data_type.load();
     debug_info_['shoot'] = float(shoot);
@@ -248,16 +243,6 @@ void WolfVision::webImage(const cv::Mat _src_img) {
     cv::resize(_src_img, _dst_img, cv::Size(640, 384));
     cv::imencode(".jpg", _dst_img, buff_bgr, params_);
     streamer_ptr_->publish("/pc", std::string(buff_bgr.begin(), buff_bgr.end()));
-
-    streamer_ptr_->publish_text_value("top yaw",robo_inf_.yaw_angle.load());
-    streamer_ptr_->publish_text_value("top pitch",robo_inf_.pitch_angle.load());
-    streamer_ptr_->publish_text_value("yaw angle",robo_cmd_.yaw_angle.load());
-    streamer_ptr_->publish_text_value("pitch angle",robo_cmd_.pitch_angle.load());
-    streamer_ptr_->publish_text_value("depth",robo_cmd_.depth.load());
-    streamer_ptr_->publish_text_value("time",time);
-    streamer_ptr_->publish_text_value("yaw angle",robo_cmd_.yaw_angle.load());
-    streamer_ptr_->publish_text_value("shoot",shoot);
-
   }
 }
 
