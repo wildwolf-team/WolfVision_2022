@@ -157,8 +157,7 @@ void WolfVision::autoAim() {
               }
               shoot = 1;
               updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
-            }
-            else{
+            }else{
             updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
             }
             break;
@@ -243,6 +242,16 @@ void WolfVision::webImage(const cv::Mat _src_img) {
     cv::resize(_src_img, _dst_img, cv::Size(640, 384));
     cv::imencode(".jpg", _dst_img, buff_bgr, params_);
     streamer_ptr_->publish("/pc", std::string(buff_bgr.begin(), buff_bgr.end()));
+
+    streamer_ptr_->publish_text_value("top yaw",robo_inf_.yaw_angle.load());
+    streamer_ptr_->publish_text_value("top pitch",robo_inf_.pitch_angle.load());
+    streamer_ptr_->publish_text_value("yaw angle",robo_cmd_.yaw_angle.load());
+    streamer_ptr_->publish_text_value("pitch angle",robo_cmd_.pitch_angle.load());
+    streamer_ptr_->publish_text_value("depth",robo_cmd_.depth.load());
+    streamer_ptr_->publish_text_value("time",time);
+    streamer_ptr_->publish_text_value("yaw angle",robo_cmd_.yaw_angle.load());
+    streamer_ptr_->publish_text_value("shoot",shoot);
+
   }
 }
 
