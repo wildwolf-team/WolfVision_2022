@@ -254,7 +254,6 @@ void WolfVision::webImage(const cv::Mat _src_img) {
     streamer_ptr_->publish_text_value("yaw angle",robo_cmd_.yaw_angle.load());
     streamer_ptr_->publish_text_value("pitch angle",robo_cmd_.pitch_angle.load());
     streamer_ptr_->publish_text_value("depth",robo_cmd_.depth.load());
-    streamer_ptr_->publish_text_value("time",time);
     streamer_ptr_->publish_text_value("shoot",shoot);
 
   }
