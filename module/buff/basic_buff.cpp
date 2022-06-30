@@ -2,8 +2,8 @@
 
 namespace basic_buff {
 
-Detector::Detector(const std::string& _buff_config_address) {
-  cv::FileStorage fs_buff(_buff_config_address, cv::FileStorage::READ);
+Detector::Detector(const std::string& _buff_config_path) {
+  cv::FileStorage fs_buff(_buff_config_path, cv::FileStorage::READ);
   // 初始化基本参数
   fs_buff["GRAY_EDIT"] >> image_config_.gray_edit;
   fs_buff["COLOR_EDIT"] >> image_config_.color_edit;
@@ -135,12 +135,20 @@ void Detector::runTask(cv::Mat& _input_img, const RoboInf& _receive_info, RoboCm
   // 计算云台角度
   if (is_find_target_) {
     // 计算云台角度
-    buff_pnp_.solvePnP(_receive_info.bullet_velocity.load(), 2, target_2d_point_, final_target_z_);
-    _send_info.yaw_angle   = -(buff_pnp_.returnYawAngle() - buff_param_.OFFSET_ARMOR_YAW);
-    _send_info.pitch_angle = buff_pnp_.returnPitchAngle() - buff_param_.OFFSET_ARMOR_PITCH;
-    _send_info.depth       = final_target_z_;
-    _send_info.data_type   = is_find_target_;
-
+    buff_pnp_.solvePnP(_receive_info.bullet_velocity.load(), 2, target_2d_point_, 7);
+    _send_info.yaw_angle.store(-(buff_pnp_.returnYawAngle() - buff_param_.OFFSET_ARMOR_YAW));
+    _send_info.pitch_angle.store(buff_pnp_.returnPitchAngle() - buff_param_.OFFSET_ARMOR_PITCH);
+    _send_info.depth.store(7);
+    _send_info.data_type.store(is_find_target_);
+    shoot_time_ = std::chrono::system_clock::now();
+    shoot_interval_ = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(shoot_time_ - last_shoot_time_).count() * 0.001);
+    if (fabs(_send_info.yaw_angle.load()) < 0.1 && fabs(_send_info.pitch_angle.load()) < 0.1 && shoot_interval_ > 0.5) {
+      _send_info.auto_shoot.store(1);
+      last_shoot_time_ = std::chrono::system_clock::now();
+    } else {
+      _send_info.auto_shoot.store(0);
+    }
+    
     fmt::print("[{}] Info, yaw: {}, pitch: {}, depth: {}\n", idntifier_yellow, _send_info.yaw_angle, _send_info.pitch_angle, _send_info.depth);
   } else {
     _send_info.yaw_angle.store(0);
@@ -279,7 +287,7 @@ void Detector::calculateTargetPointSet(
   target_y_      = target_buff_h_ + barrel_buff_botton_h_;
 
   // 计算能量机关目标的直线距离
-  final_target_z_ = sqrt((target_y_ * target_y_) + (target_x_ * target_x_));
+  final_target_z_ = sqrt((target_y_ * target_y_) + (target_x_ * target_x_)) * 0.001;
   // 通过模型计算最终目标点的位置信息（预测点）
 
   // 保存最终目标的顶点，暂时用的是排序点的返序存入才比较稳定，正确使用应为0123, pnp内已进行反向放置

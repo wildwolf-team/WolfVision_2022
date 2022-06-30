@@ -90,10 +90,10 @@ void VideoCapture::open() {
       CameraSetExposureTime(hCamera, camera_exposuretime_);
 
       CameraSetGain(hCamera, 182, 109, 100);
-      CameraSetAnalogGain(hCamera, 330);
+      CameraSetAnalogGain(hCamera, 20);
 
       CameraSetGamma(hCamera, 60);
-      CameraSetContrast(hCamera, 80);
+      // CameraSetContrast(hCamera, 80);
       // 关闭自动白平衡
       CameraSetWbMode(hCamera, FALSE);
       // CameraSetOnceWB(hCamera);
