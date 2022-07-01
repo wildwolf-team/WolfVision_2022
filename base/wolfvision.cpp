@@ -255,7 +255,7 @@ void WolfVision::webImage(const cv::Mat _src_img) {
 }
 
 void WolfVision::updataWriteData(RoboCmd& _robo_cmd, const float _yaw, const float _pitch, const int _depth, const int _data_type, const int _auto_shoot) {
-  _robo_cmd.yaw_angle.store(_yaw);
+  _robo_cmd.yaw_angle.store(-_yaw);
   _robo_cmd.pitch_angle.store(_pitch);
   _robo_cmd.depth.store(_depth*1000); // m
   _robo_cmd.data_type.store(_data_type > 1 ? 1 : _data_type);
