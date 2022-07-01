@@ -77,7 +77,7 @@ class WolfVision
     float yaw_power_     = 0.f;
     float pitch_         = 0.f;
     float depth_         = 0.f;
-    bool debug_mode_     = false;
+    bool debug_mode_     = true;
 
   private:
     std::string       vw_t_str_;

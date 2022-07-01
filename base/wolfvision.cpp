@@ -207,15 +207,13 @@ void WolfVision::spin() {
   }
 }
 
-// plotjuggler
 void WolfVision::disData() {
     debug_info_["imu_yaw"] = inf_.yaw_angle.load();
-    debug_info_["yaw"] = pnp_->returnYawAngle();
-    debug_info_["pitch"] = pnp_->returnPitchAngle();
-    debug_info_["depth"] = pnp_->returnDepth();
+    debug_info_["yaw"] = robo_cmd_.yaw_angle.load();
+    debug_info_["pitch"] = robo_cmd_.pitch_angle.load();
+    debug_info_["depth"] = robo_cmd_.depth.load();
     debug_info_["tagret_yaw"] = inf_.yaw_angle.load() - pnp_->returnYawAngle();
     debug_info_["mode"] = robo_cmd_.data_type.load();
-    debug_info_['shoot'] = float(shoot);
     pj_udp_cl_->send_message(debug_info_.dump());
     debug_info_.empty();
 }
@@ -244,12 +242,12 @@ void WolfVision::webImage(const cv::Mat _src_img) {
     cv::imencode(".jpg", _dst_img, buff_bgr, params_);
     streamer_ptr_->publish("/pc", std::string(buff_bgr.begin(), buff_bgr.end()));
 
-    streamer_ptr_->publish_text_value("top yaw",robo_inf_.yaw_angle.load());
-    streamer_ptr_->publish_text_value("top pitch",robo_inf_.pitch_angle.load());
-    streamer_ptr_->publish_text_value("yaw angle",robo_cmd_.yaw_angle.load());
-    streamer_ptr_->publish_text_value("pitch angle",robo_cmd_.pitch_angle.load());
-    streamer_ptr_->publish_text_value("depth",robo_cmd_.depth.load());
-    streamer_ptr_->publish_text_value("shoot",shoot);
+    // streamer_ptr_->publish_text_value("top yaw",robo_inf_.yaw_angle.load());
+    // streamer_ptr_->publish_text_value("top pitch",robo_inf_.pitch_angle.load());
+    // streamer_ptr_->publish_text_value("yaw angle",robo_cmd_.yaw_angle.load());
+    // streamer_ptr_->publish_text_value("pitch angle",robo_cmd_.pitch_angle.load());
+    // streamer_ptr_->publish_text_value("depth",robo_cmd_.depth.load());
+    // streamer_ptr_->publish_text_value("shoot",shoot);
 
   }
 }
