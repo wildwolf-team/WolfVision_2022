@@ -242,18 +242,18 @@ void WolfVision::webImage(const cv::Mat _src_img) {
     cv::imencode(".jpg", _dst_img, buff_bgr, params_);
     streamer_ptr_->publish("/pc", std::string(buff_bgr.begin(), buff_bgr.end()));
 
-    // streamer_ptr_->publish_text_value("top yaw",robo_inf_.yaw_angle.load());
-    // streamer_ptr_->publish_text_value("top pitch",robo_inf_.pitch_angle.load());
-    // streamer_ptr_->publish_text_value("yaw angle",robo_cmd_.yaw_angle.load());
-    // streamer_ptr_->publish_text_value("pitch angle",robo_cmd_.pitch_angle.load());
-    // streamer_ptr_->publish_text_value("depth",robo_cmd_.depth.load());
-    // streamer_ptr_->publish_text_value("shoot",shoot);
+    streamer_ptr_->publish_text_value("top yaw",robo_inf_.yaw_angle.load());
+    streamer_ptr_->publish_text_value("top pitch",robo_inf_.pitch_angle.load());
+    streamer_ptr_->publish_text_value("yaw angle",robo_cmd_.yaw_angle.load());
+    streamer_ptr_->publish_text_value("pitch angle",robo_cmd_.pitch_angle.load());
+    streamer_ptr_->publish_text_value("depth",robo_cmd_.depth.load());
+    streamer_ptr_->publish_text_value("shoot",float(shoot));
 
   }
 }
 
 void WolfVision::updataWriteData(RoboCmd& _robo_cmd, const float _yaw, const float _pitch, const int _depth, const int _data_type, const int _auto_shoot) {
-  _robo_cmd.yaw_angle.store(-_yaw);
+  _robo_cmd.yaw_angle.store(-_yaw); // 识别到无法锁定会甩开则yaw预测方向反了
   _robo_cmd.pitch_angle.store(_pitch);
   _robo_cmd.depth.store(_depth*1000); // m
   _robo_cmd.data_type.store(_data_type > 1 ? 1 : _data_type);
