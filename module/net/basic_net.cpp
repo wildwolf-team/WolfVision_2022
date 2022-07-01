@@ -71,10 +71,20 @@ void Detector::forecast_armor(const float depth, const int bullet_velocity, cv::
   compensate_w                       = (last_last_compensate_w + last_compensate_w + compensate_w) * 0.333;
   last_compensate_w                  = compensate_w;
   last_last_compensate_w             = last_compensate_w;
+  
+  double s_pitch = atan2(predict_time * p_speed * depth * 0.001, 1);  //, depth*0.001
+    // std::cout << "s_pitch=" << s_pitch << std::endl;
+  static int last_last_compensate_p = 0.f;
+  static int last_compensate_p = 0.f;
+  int compensate_p           = tan(s_pitch);
+  compensate_p           = (last_last_compensate_p + last_compensate_p + compensate_p) * 0.333;
+  last_last_compensate_p = last_compensate_p;
+  last_compensate_p = compensate_p ;
+  
   cv::putText(src_img, std::to_string(c_speed), cv::Point(50, 50), 3, 6, cv::Scalar(0, 255, 0));
   cv::putText(src_img, std::to_string(compensate_w), cv::Point(50, 200), 3, 6, cv::Scalar(0, 0, 0));
   static cv::Point2f ss              = cv::Point2f(0, 0);
-  ss                                 = cv::Point2f(-compensate_w, 0);
+  ss                                 = cv::Point2f(-compensate_w,-compensate_p);
   cv::Point2f center                 = (p[0] + p[2]) * 0.5 + ss;
   cv::circle(src_img, center, 15, cv::Scalar(0, 255, 255), -1);
   p[0] += ss;
