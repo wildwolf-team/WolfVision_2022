@@ -72,11 +72,11 @@ void Detector::forecast_armor(const float depth, const int bullet_velocity, cv::
   last_compensate_w                  = compensate_w;
   last_last_compensate_w             = last_compensate_w;
   
-  double s_pitch = atan2(predict_time * p_speed * depth * 0.001, 1);  //, depth*0.001
+  double s_pitch = atan2(predict_time * c_speed * float(depth), float(depth));  //, depth*0.001
     // std::cout << "s_pitch=" << s_pitch << std::endl;
   static int last_last_compensate_p = 0.f;
   static int last_compensate_p = 0.f;
-  int compensate_p           = tan(s_pitch);
+  int compensate_p           = 10*tan(s_pitch)* 180 / M_PI;
   compensate_p           = (last_last_compensate_p + last_compensate_p + compensate_p) * 0.333;
   last_last_compensate_p = last_compensate_p;
   last_compensate_p = compensate_p ;
@@ -99,7 +99,7 @@ void Detector::kalman_init() {
   H(0, 0) = 1;
   R(0, 0) = 0.01;
   for (int i = 1; i < S; i++) {
-    R(i, i) = 100;
+    R(i, i) = 10;
   }
   x_v = _Kalman(A, H, R, Q, init, 0);
   y_v = _Kalman(A, H, R, Q, init, 0);
