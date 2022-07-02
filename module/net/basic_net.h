@@ -57,7 +57,12 @@ public:
     inline bool returninsideflag() { return inside_flag; }
     inline bool returntimeflag() { return time_flag; }
     inline bool returnflag() { return fire_flag; }
- 
+
+   /*
+   是否找到灯条，用于蓝方
+   */
+    bool findLight();
+
     //初始化
     bool detection_init(std::string xml_path, std::string device); // ,double cof_threshold,double nms_area_threshold
     //释放资源

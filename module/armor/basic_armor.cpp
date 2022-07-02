@@ -169,6 +169,8 @@ bool Detector::findLight() {
   return true;
 }
 
+
+
 bool Detector::runBasicArmor(const cv::Mat& _src_img, const RoboInf& robo_inf) {
   // 预处理
   runImage(_src_img, robo_inf.robot_color.load());

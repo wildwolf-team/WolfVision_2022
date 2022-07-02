@@ -5,6 +5,88 @@ Detector::Detector(){}
 
 Detector::~Detector(){}
 
+bool Detector::findLight() {
+  int                                 perimeter = 0;
+  cv::RotatedRect                     box;
+  std::vector<std::vector<cv::Point>> contours;
+  cv::findContours(bin_color_img,
+                   contours,
+                   cv::RETR_EXTERNAL,
+                   cv::CHAIN_APPROX_NONE);
+
+  if (contours.size() < 2) {
+    fmt::print("[{}] Info, quantity of contours less than 2\n", idntifier_green);
+    return false;
+  }
+  // 调参开关
+  if (light_config_.light_edit == 1) {
+    std::string window_name = {"[basic_armor] findLight() -> light_trackbar"};
+    cv::namedWindow(window_name);
+
+    cv::createTrackbar("angle_min", window_name,
+                       &light_config_.angle_min, 1800, NULL);
+    cv::createTrackbar("angle_max", window_name,
+                      &light_config_.angle_max, 1800, NULL);
+
+    cv::createTrackbar("perimeter_min", window_name,
+                       &light_config_.perimeter_min, 100000, NULL);
+    cv::createTrackbar("perimeter_max", window_name,
+                       &light_config_.perimeter_max, 100000, NULL);
+
+    cv::createTrackbar("ratio_w_h_min", window_name,
+                       &light_config_.ratio_w_h_min, 1000, NULL);
+    cv::createTrackbar("ratio_w_h_max", window_name,
+                       &light_config_.ratio_w_h_max, 1000, NULL);
+
+    //cv::imshow(window_name, light_trackbar_);
+  }
+
+  for (size_t i = 0; i != contours.size(); ++i) {
+    perimeter = arcLength(contours[i], true);
+
+    if (perimeter < light_config_.perimeter_min ||
+        perimeter > light_config_.perimeter_max ||
+        contours[i].size() < 5) {
+      continue;
+    }
+
+    box = cv::fitEllipse(cv::Mat(contours[i]));
+
+    if (box.angle > 90.0f) {
+      box.angle = box.angle - 180.0f;
+    }
+
+    static float _h        = MAX(box.size.width, box.size.height);
+    static float _w        = MIN(box.size.width, box.size.height);
+    static float light_w_h = _h / _w;
+    // 判断灯条的条件
+    if (box.angle < light_config_.angle_max     &&
+        box.angle > -light_config_.angle_min    &&
+        light_w_h < light_config_.ratio_w_h_max &&
+        light_w_h > light_config_.ratio_w_h_min) {
+      light_.emplace_back(box);
+      if (light_config_.light_draw == 1 || light_config_.light_edit == 1) {
+        cv::Point2f vertex[4];
+        box.points(vertex);
+
+        for (size_t l = 0; l != 4; ++l) {
+          cv::line(draw_img_,
+                   vertex[l], vertex[(l + 1) % 4],
+                   cv::Scalar(0, 255, 255), 3, 8);
+        }
+      }
+    }
+  }
+
+  if (light_.size() < 2) {
+    fmt::print("[{}] Info, quantity of light bar less than two\n", idntifier_green);
+
+    return false;
+  }
+
+  return true;
+}
+
 float Detector::getDistance(const cv::Point a, const cv::Point b) { return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)); }
 
 // 哨兵筛选最优装甲板
@@ -210,7 +292,7 @@ bool Detector::screen_armor(const RoboInf& _robo_inf, armor_detection& armor, cv
     cv::Point img_center = cv::Point(_src_img.cols * 0.5, _src_img.rows * 0.5);
     if (_robo_inf.robot_color == Color::BLUE) {
         for (int i = 0; i < armor.rst.size(); ++i) {
-            if (armor.rst[i].color_id == 1) {
+            if (armor.rst[i].color_id == 1 && findLight()) {
               armor_.push_back(armor.rst[i]);
             }
         }

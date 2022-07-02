@@ -142,7 +142,7 @@ void WolfVision::autoAim() {
           case Mode::FORECAST_MODE: {
             // std::cout << "Mode::FORECAST_MODE" << "\n";
             net_armor_->process_frame(src_img_, armor_);
-            if (net_armor_->screen_armor(robo_inf_, armor_, src_img_)) {
+            if (net_armor_->screen_armor(robo_inf_, armor_, src_img_) && ) {
               if (armor_.rst[0].tag_id == 1 || armor_.rst[0].tag_id == 0) {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 1, armor_.rst[0].pts);
               } else {
