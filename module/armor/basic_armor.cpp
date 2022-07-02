@@ -151,24 +151,15 @@ bool Detector::findLight() {
         cv::Point2f vertex[4];
         box.points(vertex);
 
-        for (size_t l = 0; l != 4; ++l) {
-          cv::line(draw_img_,
-                   vertex[l], vertex[(l + 1) % 4],
-                   cv::Scalar(0, 255, 255), 3, 8);
-        }
       }
     }
   }
 
   if (light_.size() < 2) {
-    fmt::print("[{}] Info, quantity of light bar less than two\n", idntifier_green);
-
     return false;
   }
-
   return true;
 }
-
 
 
 bool Detector::runBasicArmor(const cv::Mat& _src_img, const RoboInf& robo_inf) {
@@ -200,38 +191,8 @@ bool Detector::runBasicArmor(const cv::Mat& _src_img, const RoboInf& robo_inf) {
   }
   last_armor_rect_ = cv::RotatedRect(cv::Point(_src_img.cols * 0.5, _src_img.rows * 0.5), cv::Size(_src_img.cols, _src_img.rows), 0);
   return false;
-  // runImage(_src_img, robo_inf.robot_color.load());
-  // draw_img_ = _src_img.clone();
-  // cv::line(draw_img_, cv::Point(_src_img.cols * 0.5, 0), cv::Point(_src_img.cols * 0.5, _src_img.rows), cv::Scalar(255, 0, 255));
-  // findLightBarContour();
-  // if (light_.size() > 0) {
-  //   lightBarFilter();
-  //   removeWrongArmor();
-  //   if (armor_.size() > 0) {
-  //     finalArmor();
-  //     for (int i = 0; i < armor_.size(); ++i) {
-  //       if (!armor_[i].armor_rect.center.inside(roi_.getRoi(last_armor_rect_, 1.1))) {
-  //         armor_.erase(armor_.begin() + i);
-  //       } else {
-  //         armor_cnt_ = 0;
-  //       }
-  //     }
-  //     if (armor_.size() == 0) {
-  //       if (armor_cnt_ > 10) {
-  //         last_armor_rect_ = cv::RotatedRect(cv::Point(_src_img.cols * 0.5, _src_img.rows * 0.5), cv::Size(_src_img.cols, _src_img.rows), 0);
-  //         armor_cnt_ = 0;
-  //       }
-  //       armor_cnt_++;
-  //       return false;
-  //     }
-  //     last_armor_rect_ = armor_[0].armor_rect;
-  //     lost_cnt_ = 10;
-  //     return true;
-  //   }
-  // }
-  // last_armor_rect_ = cv::RotatedRect(cv::Point(_src_img.cols * 0.5, _src_img.rows * 0.5), cv::Size(_src_img.cols, _src_img.rows), 0);
-  // return false;
 }
+
 
 void Detector::finalArmor() {
   armor_success = true;

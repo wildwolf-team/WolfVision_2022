@@ -68,6 +68,7 @@ class WolfVision
     std::unique_ptr<basic_pnp::PnP> pnp_;
     std::unique_ptr<basic_buff::Detector> buff_;
     std::unique_ptr<basic_net::Detector> net_armor_;
+    std::unique_ptr<basic_armor::Detector> basic_armor;
     std::shared_ptr<mindvision::VideoCapture> capture_;
     basic_net::armor_detection armor_;
     int buff_num_        = 0;

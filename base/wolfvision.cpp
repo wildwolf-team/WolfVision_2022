@@ -34,6 +34,9 @@ WolfVision::WolfVision() try {
                                               fmt::format("{}{}", CONFIG_FILE_PATH, "/angle_solve/basic_pnp_config.xml"));
   buff_    = std::make_unique<basic_buff::Detector>(fmt::format("{}{}", CONFIG_FILE_PATH, "/buff/basic_buff_config.xml"));
   net_armor_ = std::make_unique<basic_net::Detector>();
+  // basic_armor::Detector basic_armor_ = basic_armor::Detector(
+  //   fmt::format("{}{}", CONFIG_FILE_PATH, "/armor/basic_armor_config.xml"));
+  basic_armor = std::make_unique<basic_armor::Detector>(fmt::format("{}{}", CONFIG_FILE_PATH, "/armor/basic_armor_config.xml"));
   net_armor_->detection_init(fmt::format("{}{}", CONFIG_FILE_PATH, "/net/opt4_FP16.xml"), "GPU");
   armor_.rst.reserve(128);
   pnp_->serYawPower(yaw_power_);
@@ -142,7 +145,8 @@ void WolfVision::autoAim() {
           case Mode::FORECAST_MODE: {
             // std::cout << "Mode::FORECAST_MODE" << "\n";
             net_armor_->process_frame(src_img_, armor_);
-            if (net_armor_->screen_armor(robo_inf_, armor_, src_img_) && ) {
+            if (net_armor_->screen_armor(robo_inf_, armor_, src_img_)&& basic_armor->findLight()) {
+              std::cout <<  basic_armor->findLight() << "\n";
               if (armor_.rst[0].tag_id == 1 || armor_.rst[0].tag_id == 0) {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 1, armor_.rst[0].pts);
               } else {
@@ -159,6 +163,7 @@ void WolfVision::autoAim() {
               updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
             }
             else{
+               std::cout << "nono basic_armor->findLight() "<< "\n";
             updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
             }
             break;
