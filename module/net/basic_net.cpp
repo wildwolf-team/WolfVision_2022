@@ -113,7 +113,7 @@ bool Detector::topAutoShoot(const float depth, const int bullet_velocity, cv::Po
   if (T > 10) {
     s_yaw = atan2(predict_time * c_speed * float(depth), float(depth));
   }
-  int        compensate_w = 0.5 * tan(s_yaw) * 180 / M_PI;
+  int        compensate_w = tan(s_yaw) * 180 / M_PI;
   // compensate_w            = (last_last_compensate_w + last_compensate_w + compensate_w) * 0.333;
   // last_compensate_w       = compensate_w;
   // last_last_compensate_w  = last_compensate_w;
@@ -138,28 +138,28 @@ bool Detector::topAutoShoot(const float depth, const int bullet_velocity, cv::Po
 }
 
 void Detector::forecast_armor(const float depth, const int bullet_velocity, cv::Point2f p[4], cv::Mat src_img) {
-  double predict_time = (float(depth) / (bullet_velocity));
+  double predict_time = (float(depth) / (bullet_velocity)) + 0.4;
   static int last_last_compensate_w = 0.f;
   static int last_compensate_w = 0.f;
   double s_yaw                       = atan2(predict_time * c_speed * float(depth), float(depth));
-  int compensate_w                   = 40 * tan(s_yaw) * 180 / M_PI;
-  compensate_w                       = (last_last_compensate_w + last_compensate_w + compensate_w) * 0.333;
-  last_compensate_w                  = compensate_w;
-  last_last_compensate_w             = last_compensate_w;
+  int compensate_w                   = 8 * tan(s_yaw) * 180 / M_PI;
+  // compensate_w                       = (last_last_compensate_w + last_compensate_w + compensate_w) * 0.333;
+  // last_compensate_w                  = compensate_w;
+  // last_last_compensate_w             = last_compensate_w;
   
   double s_pitch = atan2(predict_time * c_speed * float(depth), float(depth));  //, depth*0.001
     // std::cout << "s_pitch=" << s_pitch << std::endl;
   static int last_last_compensate_p = 0.f;
   static int last_compensate_p = 0.f;
   int compensate_p           = 10*tan(s_pitch)* 180 / M_PI;
-  compensate_p           = (last_last_compensate_p + last_compensate_p + compensate_p) * 0.333;
-  last_last_compensate_p = last_compensate_p;
-  last_compensate_p = compensate_p ;
+  // compensate_p           = (last_last_compensate_p + last_compensate_p + compensate_p) * 0.333;
+  // last_last_compensate_p = last_compensate_p;
+  // last_compensate_p = compensate_p ;
   
   cv::putText(src_img, std::to_string(c_speed), cv::Point(50, 50), 3, 6, cv::Scalar(0, 255, 0));
   cv::putText(src_img, std::to_string(compensate_w), cv::Point(50, 200), 3, 6, cv::Scalar(0, 0, 0));
   static cv::Point2f ss              = cv::Point2f(0, 0);
-  ss                                 = cv::Point2f(-compensate_w,-compensate_p);
+  ss                                 = cv::Point2f(-compensate_w,0);
   cv::Point2f center                 = (p[0] + p[2]) * 0.5 + ss;
   cv::circle(src_img, center, 15, cv::Scalar(0, 255, 255), -1);
   p[0] += ss;

@@ -82,7 +82,7 @@ void WolfVision::autoAim() {
         sync();
       }
 
-      switch (/*robo_inf_.model*/6) {
+      switch (/*robo_inf_.model*/5) {
           case Mode::ENERGY_AGENCY: {
             // std::cout << " is ENERGY_AGENCY mode " << std::endl;
             buff_->runTask(src_img_, robo_inf_, robo_cmd_, time);
@@ -145,8 +145,8 @@ void WolfVision::autoAim() {
           case Mode::FORECAST_MODE: {
             // std::cout << "Mode::FORECAST_MODE" << "\n";
             net_armor_->process_frame(src_img_, armor_);
-            if (net_armor_->screen_armor(robo_inf_, armor_, src_img_)&& basic_armor->findLight()) {
-              std::cout <<  basic_armor->findLight() << "\n";
+            if (net_armor_->screen_armor(robo_inf_, armor_, src_img_)/*&& basic_armor->findLight()*/) {
+              //std::cout <<  basic_armor->findLight() << "\n";
               if (armor_.rst[0].tag_id == 1 || armor_.rst[0].tag_id == 0) {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 1, armor_.rst[0].pts);
               } else {

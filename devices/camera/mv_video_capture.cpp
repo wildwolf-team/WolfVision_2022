@@ -89,7 +89,9 @@ void VideoCapture::open() {
       CameraSetAeState(hCamera, FALSE);
       CameraSetExposureTime(hCamera, camera_exposuretime_);
 
-      CameraSetGain(hCamera, 182, 109, 100);
+      CameraSetGain(hCamera, 100, 100, 105);
+      //red  145 100 95
+      //blue 100 100 105
       CameraSetAnalogGain(hCamera, 20);
 
       CameraSetGamma(hCamera, 60);
