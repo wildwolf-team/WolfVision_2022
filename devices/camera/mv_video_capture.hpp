@@ -121,7 +121,7 @@ class VideoCapture {
    */
   void cameraReleasebuff();
 
-  void open(int _my_color);
+  void open();
   /**
    * @brief 返回相机读取图片
    * 

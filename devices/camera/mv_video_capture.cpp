@@ -43,7 +43,7 @@ void VideoCapture::operator>>(cv::Mat& img) {
 }
 
 
-void VideoCapture::open(int _my_color) {
+void VideoCapture::open() {
 
   if(is_open_) {
     fmt::print("[{}] Error, mindvision industrial camera already open.\n", idntifier_red);
@@ -91,12 +91,15 @@ void VideoCapture::open(int _my_color) {
       CameraSetAeState(hCamera, FALSE);
       CameraSetExposureTime(hCamera, camera_exposuretime_);
 
-      switch (_my_color) {  // change color 避免误识别灰色
+      switch (2) {  // change color 避免误识别灰色
        case MyColor::RED:
-             CameraSetGain(hCamera, 145, 100, 95);
+             CameraSetGain(hCamera, 165, 100, 65);
        break;
        case MyColor::BLUE:
-             CameraSetGain(hCamera, 100, 100, 105);
+             CameraSetGain(hCamera, 100, 100, 105);   
+       break;
+       default:
+             CameraSetGain(hCamera, 182, 109, 100);  
        break;
       }
 

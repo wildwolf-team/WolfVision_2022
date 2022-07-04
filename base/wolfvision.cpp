@@ -29,7 +29,7 @@ WolfVision::WolfVision() try {
   capture_ = std::make_shared<mindvision::VideoCapture>(camera_params);
 
   if(!capture_->isOpen())
-    capture_->open(robo_inf_.robot_color.load());
+    capture_->open();  
 
   pnp_     = std::make_unique<basic_pnp::PnP>(fmt::format("{}{}", CONFIG_FILE_PATH, "/camera/mv_camera_config_554.xml"),
                                               fmt::format("{}{}", CONFIG_FILE_PATH, "/angle_solve/basic_pnp_config.xml"));
