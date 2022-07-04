@@ -14,12 +14,20 @@
 #include <fmt/core.h>
 #include <fmt/color.h>
 
+#include <utils.hpp>
+
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc/imgproc_c.h>
 
 #include <CameraApi.h>
 
 namespace mindvision {
+
+enum MyColor {
+  ALL,
+  RED,
+  BLUE,
+};
 
 enum EXPOSURETIME {
   // 相机曝光时间
@@ -113,7 +121,7 @@ class VideoCapture {
    */
   void cameraReleasebuff();
 
-  void open();
+  void open(int _my_color);
   /**
    * @brief 返回相机读取图片
    * 
@@ -139,6 +147,8 @@ class VideoCapture {
 
   cv::Size getImageSize();
 
+  int myColor(const RoboInf& _robo_inf);
+
 
  private:
   std::mutex mtx;
@@ -151,6 +161,7 @@ class VideoCapture {
   int  hCamera;
   int  channel        = 3;
   bool is_open_       = false;
+
 
   tSdkCameraDevInfo   tCameraEnumList;
   tSdkCameraCapbility tCapability;

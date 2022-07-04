@@ -1,6 +1,8 @@
 #pragma once
 #include <atomic>
 
+
+// 串口输出数据结构体
 struct RoboCmd {
   std::atomic<float> yaw_angle;
   std::atomic<float> pitch_angle;
@@ -20,6 +22,7 @@ struct RoboCmdUartBuff{
   uint8_t  end         = (unsigned)'E';
 } __attribute__((packed));
 
+// 串口输入数据结构体
 struct RoboInf {
   std::atomic<float>   yaw_angle;
   std::atomic<float>   pitch_angle;

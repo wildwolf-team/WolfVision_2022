@@ -42,7 +42,9 @@ void VideoCapture::operator>>(cv::Mat& img) {
   }
 }
 
-void VideoCapture::open() {
+
+void VideoCapture::open(int _my_color) {
+
   if(is_open_) {
     fmt::print("[{}] Error, mindvision industrial camera already open.\n", idntifier_red);
   }
@@ -89,9 +91,18 @@ void VideoCapture::open() {
       CameraSetAeState(hCamera, FALSE);
       CameraSetExposureTime(hCamera, camera_exposuretime_);
 
-      CameraSetGain(hCamera, 100, 100, 105);
-      //red  145 100 95
-      //blue 100 100 105
+      switch (_my_color) {  // change color 避免误识别灰色
+       case MyColor::RED:
+             CameraSetGain(hCamera, 145, 100, 95);
+       break;
+       case MyColor::BLUE:
+             CameraSetGain(hCamera, 100, 100, 105);
+       break;
+      }
+
+      // CameraSetGain(hCamera, 100, 100, 105);
+      //my color:red  145 100 95
+      //my color:blue 100 100 105
       CameraSetAnalogGain(hCamera, 20);
 
       CameraSetGamma(hCamera, 60);
@@ -117,6 +128,20 @@ void VideoCapture::open() {
     }
   }
 }
+
+// int myColor(const RoboInf& _robo_inf){
+//  switch ()
+//  {
+//  case /* constant-expression */:
+//   /* code */
+//   break;
+ 
+//  default:
+//   break;
+//  }
+// }
+
+
 
 void VideoCapture::setCameraExposureTime(const int _camera_exposure_time) {
   camera_exposuretime_ = _camera_exposure_time;

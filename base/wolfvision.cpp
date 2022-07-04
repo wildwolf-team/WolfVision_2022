@@ -27,8 +27,9 @@ WolfVision::WolfVision() try {
 
   mindvision::CameraParam camera_params(0, mindvision::RESOLUTION_1280_X_768, camera_exposure_);
   capture_ = std::make_shared<mindvision::VideoCapture>(camera_params);
+
   if(!capture_->isOpen())
-    capture_->open();
+    capture_->open(robo_inf_.robot_color.load());
 
   pnp_     = std::make_unique<basic_pnp::PnP>(fmt::format("{}{}", CONFIG_FILE_PATH, "/camera/mv_camera_config_554.xml"),
                                               fmt::format("{}{}", CONFIG_FILE_PATH, "/angle_solve/basic_pnp_config.xml"));
@@ -75,6 +76,7 @@ void WolfVision::autoAim() {
       armor_.armor_t = time;     
       inf_.yaw_angle = robo_inf_.yaw_angle.load();
       inf_.pitch_angle = robo_inf_.pitch_angle.load();
+
 
       if (vw_mode_) {
         write_img_ = src_img_.clone();
@@ -129,12 +131,13 @@ void WolfVision::autoAim() {
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[armor_num].pts);
               }
-              if (net_armor_->returnflag() && net_armor_->returninsideflag() && net_armor_->returntimeflag()) {      
-               updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 1);
-              }
-              else{
-               updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
-              }
+              updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
+              // if (net_armor_->returnflag() && net_armor_->returninsideflag() && net_armor_->returntimeflag()) {      
+              //  updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 1);
+              // }
+              // else{
+              //  updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
+              // }
             }
             else{
              updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
