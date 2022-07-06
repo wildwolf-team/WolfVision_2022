@@ -1,5 +1,5 @@
 # Create project
-cmake_minimum_required(VERSION 3.10.0)
+cmake_minimum_required(VERSION 3.14.0)
 project(WolfVision VERSION 2021.7.9 LANGUAGES CXX)
 
 # Check system platform
@@ -52,15 +52,35 @@ find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 link_libraries(${OpenCV_LIBS})
 
+# Add Fetch Content module
+include(FetchContent)
+
 # Add fmtlib directory
-add_subdirectory(3rdparty/fmt)
+find_package(fmt QUIET)
+if (NOT fmt_FOUND)
+    FetchContent_Declare(
+        fmt
+        GIT_REPOSITORY https://hub.fastgit.xyz/fmtlib/fmt.git
+        GIT_TAG 9.0.0
+    )
+    FetchContent_MakeAvailable(fmt)
+    list(APPEND EXTRA_INCLUDES ${fmt_SOURCE_DIR}/include)
+endif()
+
 # Add fmtlib include to EXTRA_INCLUDES
-list(APPEND EXTRA_INCLUDES 3rdparty/fmt/include)
 
 #add eigen
-add_subdirectory(3rdparty/eigen-git-mirror)
-list(APPEND EXTRA_INCLUDES 3rdparty/eigen-git-mirror/Eigen)
-# find_library(Eigen /WolfVision-Dev/3rdparty/eigen-git-mirror)
+find_package(Eigen3 QUIET)
+if (NOT Eigen3_FOUND)
+    FetchContent_Declare(
+        Eigen3
+        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+    )
+    FetchContent_MakeAvailable(Eigen3)
+    list(APPEND EXTRA_INCLUDES ${Eigen3_SOURCE_DIR}/Eigen)
+else()
+    list(APPEND EXTRA_INCLUDES ${EIGEN3_INCLUDE_DIRS})
+endif()
 
 # Add mindvision-sdk directory and include path for target
 add_library(MVSDK SHARED IMPORTED)
