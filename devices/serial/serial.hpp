@@ -24,7 +24,7 @@ class RoboSerial : public serial::Serial {
     RoboCmdUartBuff robo_cmd_uart_temp;
     robo_cmd_uart_temp.yaw_angle   = robo_cmd.yaw_angle.load();
     robo_cmd_uart_temp.pitch_angle = robo_cmd.pitch_angle.load();
-    // robo_cmd_uart_temp.depth       = robo_cmd.depth.load();
+    // robo_cmd_uart_temp.depth       = robo_cmd.depth.load();   // 新串口删去输出的深度信息
     robo_cmd_uart_temp.data_type   = robo_cmd.data_type.load();
     robo_cmd_uart_temp.auto_shoot  = robo_cmd.auto_shoot.load();
     robo_cmd_uart_temp.crc = checksumCRC((uint8_t*)&(robo_cmd_uart_temp) + 1, sizeof(robo_cmd_uart_temp) - 3);
@@ -35,15 +35,16 @@ class RoboSerial : public serial::Serial {
     RoboInfUartBuff robo_inf_uart_temp;
     uint8_t temp;
     this->read(&temp, 1);
-    while (temp != 'S')
+    while (temp != 'S') // 开始标志
       this->read(&temp, 1);
+
     this->read((uint8_t*)&robo_inf_uart_temp, sizeof(robo_inf_uart_temp));
-    if (robo_inf_uart_temp.end == 'E') {
+    if (robo_inf_uart_temp.end == 'E') { // 结束标志
       robo_inf.yaw_angle.store(robo_inf_uart_temp.yaw_angle);
       robo_inf.pitch_angle.store(robo_inf_uart_temp.pitch_angle);
       robo_inf.model.store(int(robo_inf_uart_temp.model));
       if (int(robo_inf_uart_temp.robot_id) < 100) {
-        robo_inf.robot_color.store(Color::RED);
+        robo_inf.robot_color.store(Color::RED);  // 根据电控发来的id判断己方颜色
       } else {
         robo_inf.robot_color.store(Color::BLUE);
       }

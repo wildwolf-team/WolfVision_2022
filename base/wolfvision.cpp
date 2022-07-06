@@ -37,7 +37,7 @@ WolfVision::WolfVision() try {
   net_armor_ = std::make_unique<basic_net::Detector>();
   // basic_armor::Detector basic_armor_ = basic_armor::Detector(
   //   fmt::format("{}{}", CONFIG_FILE_PATH, "/armor/basic_armor_config.xml"));
-  basic_armor = std::make_unique<basic_armor::Detector>(fmt::format("{}{}", CONFIG_FILE_PATH, "/armor/basic_armor_config.xml"));
+  // basic_armor = std::make_unique<basic_armor::Detector>(fmt::format("{}{}", CONFIG_FILE_PATH, "/armor/basic_armor_config.xml"));
   net_armor_->detection_init(fmt::format("{}{}", CONFIG_FILE_PATH, "/net/opt4_FP16.xml"), "GPU");
   armor_.rst.reserve(128);
   pnp_->serYawPower(yaw_power_);
@@ -59,7 +59,7 @@ void WolfVision::autoAim() {
   ThreadPool pool(4); 
   while (true) {
     is_shoot_ = false;
-    shoot = 0;
+
     if (capture_->isOpen()) {
 
       *capture_>>src_img_;
@@ -131,7 +131,8 @@ void WolfVision::autoAim() {
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[armor_num].pts);
               }
-              updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
+              is_shoot_ = 1；
+              updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), is_shoot_);
               // if (net_armor_->returnflag() && net_armor_->returninsideflag() && net_armor_->returntimeflag()) {      
               //  updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 1);
               // }
@@ -140,7 +141,7 @@ void WolfVision::autoAim() {
               // }
             }
             else{
-             updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
+             updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), is_shoot_);
             }
             break;
           
@@ -162,12 +163,13 @@ void WolfVision::autoAim() {
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[0].pts);
               }
-              shoot = 1;
+              shoot = true;
               updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
             }
             else{
-               std::cout << "nono basic_armor->findLight() "<< "\n";
-            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
+             shoot = false;
+             std::cout << "nono basic_armor->findLight() "<< "\n";
+             updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), shoot);
             }
             break;
           }
@@ -200,6 +202,7 @@ void WolfVision::autoAim() {
   }
 }
 
+// 线程开启
 void WolfVision::spin() {
   std::thread uartWriteThread(std::bind(&WolfVision::serialWrite,this));
   std::thread uartReadThread(std::bind(&WolfVision::serialRead,this));
@@ -215,6 +218,7 @@ void WolfVision::spin() {
   }
 }
 
+// PlotJuggler
 void WolfVision::disData() {
     debug_info_["imu_yaw"] = inf_.yaw_angle.load();
     debug_info_["yaw"] = robo_cmd_.yaw_angle.load();
@@ -242,7 +246,7 @@ void WolfVision::switchMode() {
   }
 }
 
-void WolfVision::webImage(const cv::Mat _src_img) {
+void WolfVision::webImage(const cv::Mat _src_img) { // 网页端
   if (!_src_img.empty()) {
     std::vector<uchar> buff_bgr;
     cv::Mat _dst_img;

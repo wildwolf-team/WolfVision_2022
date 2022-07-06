@@ -183,6 +183,8 @@ void Detector::kalman_init() {
   top_angle = _Kalman(A, H, R, Q_, init, 0);
 }
 
+// angle : inf_.yaw_angle.load() - pnp_->returnYawAngle()
+// p_angle : inf_.pitch_angle.load() + pnp_->returnPitchAngle()
 void Detector::forecastFlagV(float time, double angle, double p_angle) {
   static double last_angle = 0.f;
   angle                    = angle * M_PI / 180;
@@ -453,7 +455,8 @@ void Detector::process_frame(cv::Mat& inframe, armor_detection& armor){
     memcpy(blob_data, x.data, input_size*sizeof(float));
 
     // 执行预测
-    infer_request->Infer();
+    infer_request->In
+    fer();
 
     // 四点模型的 _outputinfo 应该只有一个输入节点--"output"
     // 获取 output节点 
