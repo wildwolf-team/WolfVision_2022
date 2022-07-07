@@ -231,6 +231,7 @@ bool Detector::detection_init(std::string xml_path, std::string device) {  // ,d
   // _cof_threshold      = cof_threshold;
   // _nms_area_threshold = nms_area_threshold;
   Core ie;
+  ie.SetConfig({{CONFIG_KEY(CACHE_DIR), ".cache"}});
   auto cnnNetwork = ie.ReadNetwork(_xml_path);
   //输入设置
   InputsDataMap   inputInfo(cnnNetwork.getInputsInfo());
