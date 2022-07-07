@@ -24,8 +24,8 @@ WolfVision::WolfVision() try {
   camera_exposure_ = config_json_["camera_exposure_time"].get<int>();
   buff_exposure_   = config_json_["buff_exposure"].get<int>();
   yaw_power_       = config_json_["yaw_power"].get<float>();
-  mindvision::CameraParam camera_params(0, mindvision::RESOLUTION_1280_X_768, camera_exposure_);
-  capture_ = std::make_shared<mindvision::VideoCapture>(camera_params);
+  capture_ = std::make_shared<mindvision::VideoCapture>(mindvision::RESOLUTION::RESOLUTION_1280_X_768,
+    fmt::format("{}{}", CONFIG_FILE_PATH, "/camera/camera_param.yaml"));
   if(!capture_->isOpen())
     capture_->open();
   pnp_     = std::make_unique<basic_pnp::PnP>(fmt::format("{}{}", CONFIG_FILE_PATH, "/camera/mv_camera_config_555.xml"),

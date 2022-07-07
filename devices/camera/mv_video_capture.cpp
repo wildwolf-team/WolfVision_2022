@@ -14,9 +14,10 @@ namespace mindvision {
 auto idntifier_green = fmt::format(fg(fmt::color::green) | fmt::emphasis::bold, "mv_video_capture");
 auto idntifier_red   = fmt::format(fg(fmt::color::red)   | fmt::emphasis::bold, "mv_video_capture");
 
-VideoCapture::VideoCapture(const CameraParam &_camera_param) :
-  camera_exposuretime_(_camera_param.camera_exposuretime),
-  camera_resolution_(_camera_param.resolution) {
+VideoCapture::VideoCapture(const RESOLUTION _resolution, const std::string _config_path){
+  config_path_ = _config_path;
+  camera_param_.resolution = Camera_Resolution(_resolution);
+  readConfig();
 }
 
 VideoCapture::~VideoCapture() {
@@ -40,6 +41,23 @@ void VideoCapture::operator>>(cv::Mat& img) {
     fmt::print("[{}] read img from camera failed.\n", idntifier_red);
     is_open_ = false;
   }
+}
+
+void VideoCapture::readConfig() {
+  cv::FileStorage fs;
+  fs.open(config_path_, cv::FileStorage::READ);
+
+  camera_param_.analog_gain = static_cast<int>(fs["AnalogGain"]);
+  camera_param_.exposure_time = static_cast<int>(fs["ExposureTime"]);
+  camera_param_.sharpen = static_cast<int>(fs["Sharpen"]);
+  camera_param_.gamma = static_cast<int>(fs["Gamma"]);
+  camera_param_.contrast = static_cast<int>(fs["Contrast"]);
+  camera_param_.red_gain = static_cast<int>(fs["RedGain"]);
+  camera_param_.green_gain = static_cast<int>(fs["GreenGain"]);
+  camera_param_.blue_gain = static_cast<int>(fs["BlueGain"]);
+  camera_param_.saturation = static_cast<int>(fs["Saturation"]);
+
+  fs.release();
 }
 
 void VideoCapture::open() {
@@ -76,27 +94,30 @@ void VideoCapture::open() {
       CameraGetImageResolution(hCamera, &pImageResolution);
 
       pImageResolution.iIndex      = 0xFF;
-      pImageResolution.iWidthFOV   = camera_resolution_.cols;
-      pImageResolution.iHeightFOV  = camera_resolution_.rows;
-      pImageResolution.iWidth      = camera_resolution_.cols;
-      pImageResolution.iHeight     = camera_resolution_.rows;
-      pImageResolution.iHOffsetFOV = static_cast<int>((1280 - camera_resolution_.cols) * 0.5);
-      pImageResolution.iVOffsetFOV = static_cast<int>((1024 - camera_resolution_.rows) * 0.5);
+      pImageResolution.iWidthFOV   = camera_param_.resolution.cols;
+      pImageResolution.iHeightFOV  = camera_param_.resolution.rows;
+      pImageResolution.iWidth      = camera_param_.resolution.cols;
+      pImageResolution.iHeight     = camera_param_.resolution.rows;
+      pImageResolution.iHOffsetFOV = static_cast<int>((1280 - camera_param_.resolution.cols) * 0.5);
+      pImageResolution.iVOffsetFOV = static_cast<int>((1024 - camera_param_.resolution.rows) * 0.5);
 
       CameraSetImageResolution(hCamera, &pImageResolution);
 
       // 设置曝光时间
       CameraSetAeState(hCamera, FALSE);
-      CameraSetExposureTime(hCamera, camera_exposuretime_);
+      CameraSetExposureTime(hCamera, camera_param_.exposure_time);
 
-      CameraSetGain(hCamera, 182, 109, 100);
-      CameraSetAnalogGain(hCamera, 20);
-
-      CameraSetGamma(hCamera, 60);
-      // CameraSetContrast(hCamera, 80);
       // 关闭自动白平衡
       CameraSetWbMode(hCamera, FALSE);
-      // CameraSetOnceWB(hCamera);
+
+      // 设置增益
+      CameraSetGain(hCamera, camera_param_.red_gain, camera_param_.green_gain, camera_param_.blue_gain);
+      CameraSetAnalogGain(hCamera, camera_param_.analog_gain);
+
+      // 设置 Gamma 与对比度
+      CameraSetGamma(hCamera, camera_param_.gamma);
+      CameraSetContrast(hCamera, camera_param_.contrast);
+
       // 让SDK进入工作模式
       CameraPlay(hCamera);
       CameraReleaseImageBuffer(hCamera, pbyBuffer);
@@ -117,10 +138,10 @@ void VideoCapture::open() {
 }
 
 void VideoCapture::setCameraExposureTime(const int _camera_exposure_time) {
-  camera_exposuretime_ = _camera_exposure_time;
+  camera_param_.exposure_time = _camera_exposure_time;
   if (is_open_) {
     std::lock_guard<std::mutex> lk(mtx);
-    CameraSetExposureTime(hCamera, camera_exposuretime_);
+    CameraSetExposureTime(hCamera, camera_param_.exposure_time);
   }
 }
 
@@ -132,17 +153,21 @@ void VideoCapture::setCameraOnceWB() {
   }
 }
 
-void VideoCapture::setCameraColorGain(int iRGain, int iGGain, int iBGain) {
+void VideoCapture::setCameraColorGain(int _iRGain, int _iGGain, int _iBGain) {
+  camera_param_.red_gain = _iRGain;
+  camera_param_.green_gain = _iGGain;
+  camera_param_.blue_gain = _iBGain;
   if (is_open_) {
     std::lock_guard<std::mutex> lk(mtx);
-    CameraSetGain(hCamera, iRGain, iGGain, iBGain);
+    CameraSetGain(hCamera, _iRGain, _iGGain, _iBGain);
   }
 }
 
-void VideoCapture::setCameraAnalogGrain(int iAnalogGain) {
+void VideoCapture::setCameraAnalogGrain(int _iAnalogGain) {
+  camera_param_.analog_gain = _iAnalogGain;
   if (is_open_) {
     std::lock_guard<std::mutex> lk(mtx);
-    CameraSetAnalogGain(hCamera, iAnalogGain);
+    CameraSetAnalogGain(hCamera, _iAnalogGain);
   }
 }
 
@@ -160,15 +185,15 @@ bool VideoCapture::isOpen() {
 }
 
 int VideoCapture::getImageCols() {
-  return camera_resolution_.cols;
+  return camera_param_.resolution.cols;
 }
 
 int VideoCapture::getImageRows() {
-  return camera_resolution_.rows;
+  return camera_param_.resolution.rows;
 }
 
 cv::Size VideoCapture::getImageSize() {
-  return cv::Size(camera_resolution_.cols, camera_resolution_.rows);
+  return cv::Size(camera_param_.resolution.cols, camera_param_.resolution.rows);
 }
 
 }  // namespace mindvision
