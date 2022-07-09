@@ -51,8 +51,6 @@ enum Mode {
   SUP_SHOOT,
   // Talisman Mode
   ENERGY_AGENCY,
-  // Tradition_vision
-  TRADITION_MODE = 4,
   TOP_MODE = 5,
   // Forecast Mode
   FORECAST_MODE = 6,

@@ -68,7 +68,6 @@ class WolfVision
     std::unique_ptr<basic_pnp::PnP> pnp_;
     std::unique_ptr<basic_buff::Detector> buff_;
     std::unique_ptr<basic_net::Detector> net_armor_;
-    std::shared_ptr<basic_armor::Detector> basic_armor_;
     std::shared_ptr<mindvision::VideoCapture> capture_;
     basic_net::armor_detection armor_;
     int buff_num_        = 0;
@@ -78,15 +77,6 @@ class WolfVision
     float yaw_power_     = 0.f;
     float pitch_         = 0.f;
     float depth_         = 0.f;
-
-
-    float yaw = 0;
-    float pitch = 0;
-    float last_yaw = 0;
-    float last_pitch = 0;
-    float depth = 0;
-    std::vector<cv::Point2f> target_2d;
-
     bool debug_mode_     = false;
 
   private:

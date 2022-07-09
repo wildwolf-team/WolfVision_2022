@@ -176,32 +176,64 @@ bool Detector::runBasicArmor(const cv::Mat& _src_img, const RoboInf& robo_inf) {
   if (findLight()) {
     if (fittingArmor()) {
       finalArmor();
-      // for (int i = 0; i < armor_.size(); ++i) {
-      //   if (!armor_[i].armor_rect.center.inside(roi_.getRoi(last_armor_rect_, 1.1))) {
-      //     armor_.erase(armor_.begin() + i);
-      //   } else {
-      //     armor_cnt_ = 0;
-      //   }
-      // }
-      // if (armor_.size() == 0) {
-      //   if (armor_cnt_ > 10) {
-      //     last_armor_rect_ = cv::RotatedRect(cv::Point(_src_img.cols * 0.5, _src_img.rows * 0.5), cv::Size(_src_img.cols, _src_img.rows), 0);
-      //     armor_cnt_ = 0;
-      //   }
-      //   armor_cnt_++;
-      //   return false;
-      // }
-      // last_armor_rect_ = armor_[0].armor_rect;
+      for (int i = 0; i < armor_.size(); ++i) {
+        if (!armor_[i].armor_rect.center.inside(roi_.getRoi(last_armor_rect_, 1.1))) {
+          armor_.erase(armor_.begin() + i);
+        } else {
+          armor_cnt_ = 0;
+        }
+      }
+      if (armor_.size() == 0) {
+        if (armor_cnt_ > 10) {
+          last_armor_rect_ = cv::RotatedRect(cv::Point(_src_img.cols * 0.5, _src_img.rows * 0.5), cv::Size(_src_img.cols, _src_img.rows), 0);
+          armor_cnt_ = 0;
+        }
+        armor_cnt_++;
+        return false;
+      }
+      last_armor_rect_ = armor_[0].armor_rect;
       lost_cnt_ = 10;
       return true;
     }
   }
-  // last_armor_rect_ = cv::RotatedRect(cv::Point(_src_img.cols * 0.5, _src_img.rows * 0.5), cv::Size(_src_img.cols, _src_img.rows), 0);
+  last_armor_rect_ = cv::RotatedRect(cv::Point(_src_img.cols * 0.5, _src_img.rows * 0.5), cv::Size(_src_img.cols, _src_img.rows), 0);
   return false;
+  // runImage(_src_img, robo_inf.robot_color.load());
+  // draw_img_ = _src_img.clone();
+  // cv::line(draw_img_, cv::Point(_src_img.cols * 0.5, 0), cv::Point(_src_img.cols * 0.5, _src_img.rows), cv::Scalar(255, 0, 255));
+  // findLightBarContour();
+  // if (light_.size() > 0) {
+  //   lightBarFilter();
+  //   removeWrongArmor();
+  //   if (armor_.size() > 0) {
+  //     finalArmor();
+  //     for (int i = 0; i < armor_.size(); ++i) {
+  //       if (!armor_[i].armor_rect.center.inside(roi_.getRoi(last_armor_rect_, 1.1))) {
+  //         armor_.erase(armor_.begin() + i);
+  //       } else {
+  //         armor_cnt_ = 0;
+  //       }
+  //     }
+  //     if (armor_.size() == 0) {
+  //       if (armor_cnt_ > 10) {
+  //         last_armor_rect_ = cv::RotatedRect(cv::Point(_src_img.cols * 0.5, _src_img.rows * 0.5), cv::Size(_src_img.cols, _src_img.rows), 0);
+  //         armor_cnt_ = 0;
+  //       }
+  //       armor_cnt_++;
+  //       return false;
+  //     }
+  //     last_armor_rect_ = armor_[0].armor_rect;
+  //     lost_cnt_ = 10;
+  //     return true;
+  //   }
+  // }
+  // last_armor_rect_ = cv::RotatedRect(cv::Point(_src_img.cols * 0.5, _src_img.rows * 0.5), cv::Size(_src_img.cols, _src_img.rows), 0);
+  // return false;
 }
 
 void Detector::finalArmor() {
   armor_success = true;
+  
   if (armor_.size() == 1) {
     fmt::print("[{}] Info, only one armor\n", idntifier_green);
   } else {
@@ -1028,7 +1060,108 @@ std::vector<cv::Point2f> Detector::forecast_armor(float depth, const int bullet_
   traget_2d[1] += ss;
   traget_2d[2] += ss;
   traget_2d[3] += ss;
+
+  cv::Point2f center = returnFinalArmorRotatedRect(0).center;
+  center += ss;
+  int width = returnFinalArmorRotatedRect(0).size.width * 1.5;
+  cv::circle(draw_img_, center, 15, cv::Scalar(0, 255, 255), -1);
+  cv::line(draw_img_, cv::Point(draw_img_.cols * 0.5 - width, 0), cv::Point(draw_img_.cols * 0.5 - width, draw_img_.rows), cv::Scalar(0, 0, 255));
+  cv::line(draw_img_, cv::Point(draw_img_.cols * 0.5 + width, 0), cv::Point(draw_img_.cols * 0.5 + width, draw_img_.rows), cv::Scalar(0, 0, 255));
+  is_shoot = false;
+  if (center.x < draw_img_.cols * 0.5 + width && center.x > draw_img_.cols * 0.5 - width) {
+    is_shoot = true;
+  }
   return traget_2d;
+}
+
+std::vector<cv::Point2f> Detector::outpost_forecast_armor(float depth, const int bullet_velocity, int num) {
+  double predict_time = (depth * 0.001 / bullet_velocity);
+  // double T = M_PI / (c_speed * depth * 0.001 * 0.026 * 2);
+  fixed_time = fabs(90 / ((c_speed * int(depth * 0.001) * 1000) / 26));
+  fixed_time = (last_last_fixed_time + last_fixed_time + fixed_time) * 0.333;
+  last_last_fixed_time = last_fixed_time;
+  last_fixed_time = fixed_time;
+
+  // while (fixed_time < predict_time) {
+  //   fixed_time += fabs(90 / ((c_speed * int(depth * 0.001) * 1000) / 26));
+  // }
+  double delta_time = fixed_time - predict_time;
+  // std::cout << "转动时间 = " << fixed_time << std::endl;
+  // std::cout << "子弹飞行时间 = " << predict_time << std::endl;
+  // std::cout << "反向预测时间 = " << delta_time << std::endl;
+  // if (fixed_time > 1) {
+  //   delta_time = -predict_time;
+  // }
+
+  double s_yaw = atan2(delta_time * c_speed * depth * 0.001, 1);
+  compensate_w = 8 * tan(s_yaw);
+  compensate_w           = (last_last_compensate_w + last_compensate_w + compensate_w) * 0.333;
+  last_last_compensate_w = last_compensate_w;
+  last_compensate_w      = compensate_w;
+  static cv::Point2f ss = cv::Point2f(0, 0);
+  ss = cv::Point2f(compensate_w, 0);
+  std::vector<cv::Point2f> traget_2d = returnFinalArmor4Point(num);
+  traget_2d[0] += ss;
+  traget_2d[1] += ss;
+  traget_2d[2] += ss;
+  traget_2d[3] += ss;
+  return traget_2d;
+}
+
+std::vector<cv::Point2f> Detector::top_forecast_armor(float depth, const int bullet_velocity){
+  double predict_time = (depth * 0.001 / bullet_velocity);
+  double s_yaw        = atan2(predict_time * c_speed * depth * 0.001, 1);
+  // std::cout << "s_yaw=" << s_yaw << std::endl;
+  compensate_w           = 8 * tan(s_yaw);
+  compensate_w           = (last_last_compensate_w + last_compensate_w + compensate_w) * 0.333;
+  last_last_compensate_w = last_compensate_w;
+  last_compensate_w      = compensate_w;
+  static cv::Point2f ss  = cv::Point2f(0, 0);
+  ss                     = cv::Point2f(compensate_w, 0);
+  // std::cout << "compensate_w=" << compensate_w << std::endl;
+  std::vector<cv::Point2f> traget_2d = returnFinalArmor4Point(0);
+  traget_2d[0] += ss;
+  traget_2d[1] += ss;
+  traget_2d[2] += ss;
+  traget_2d[3] += ss;
+  return traget_2d;
+}
+
+cv::Rect2f Detector::get_armor_fake_Roi(const float coefficient) {
+  cv::Point2f center  = armor_[0].armor_rect.center;
+  float       width_  = armor_[0].armor_rect.size.width;
+  float       height_ = armor_[0].armor_rect.size.height;
+  _roi                = cv::Rect2f(center.x - width_ * 0.8, center.y - height_ * 0.8, width_ * coefficient, height_ * coefficient);
+  return _roi;
+}
+
+bool Detector::is_armor_inside_Roi(cv::Rect2f Rect_, cv::Point2f center_point) {
+  bool x_in = (center_point.x > Rect_.tl().x && center_point.x < Rect_.br().x);
+  bool y_in = (center_point.y > Rect_.tl().y && center_point.y < Rect_.br().y);
+  if (x_in && y_in) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+int Detector::fake_roi_judge() {
+  int _armorNum;
+  if (last_armor_flag && !armor_flag) {
+    lost_flag = true;
+  }
+  if (lost_flag) {
+    exist_times++;
+  }
+  if (exist_times < 20 && lost_flag) {
+    _armorNum = armor_.size() + 1;
+  } else {
+    _armorNum   = armor_.size();
+    exist_times = 0;
+    lost_flag   = false;
+  }
+  last_armor_flag = armor_flag;
+  return _armorNum;
 }
 
 // 小陀螺自动击打
