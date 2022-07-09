@@ -30,6 +30,7 @@ WolfVision::WolfVision() try {
     capture_->open();
   pnp_     = std::make_unique<basic_pnp::PnP>(fmt::format("{}{}", CONFIG_FILE_PATH, "/camera/mv_camera_config_555.xml"),
                                               fmt::format("{}{}", CONFIG_FILE_PATH, "/angle_solve/basic_pnp_config.xml"));
+  basic_armor_   = std::make_shared<basic_armor::Detector>(fmt::format("{}{}", CONFIG_FILE_PATH, "/armor/basic_armor_config.xml"));
   buff_    = std::make_unique<basic_buff::Detector>(fmt::format("{}{}", CONFIG_FILE_PATH, "/buff/basic_buff_config.xml"));
   net_armor_ = std::make_unique<basic_net::Detector>();
   net_armor_->detection_init(fmt::format("{}{}", CONFIG_FILE_PATH, "/net/opt4_FP16.xml"), "GPU");
@@ -72,8 +73,32 @@ void WolfVision::autoAim() {
         vw_src_.write(write_img_);
         sync();
       }
-
       switch (robo_inf_.model) {
+            case Mode::TRADITION_MODE: {
+            // std::cout << "is TRADITION_MODE" << std::endl;
+            basic_armor_->freeMemory();
+            if(basic_armor_->runBasicArmor(src_img_, robo_inf_)){
+              pnp_->solvePnP(robo_inf_.bullet_velocity, basic_armor_->returnFinalArmorDistinguish(0), basic_armor_->returnFinalArmorRotatedRect(0));
+              yaw   = pnp_->returnYawAngle();
+              depth = pnp_->returnDepth();
+              pitch = pnp_->returnPitchAngle();
+              basic_armor_->forecast_armor_flag(armor_.armor_t, robo_inf_.yaw_angle, last_yaw);
+              target_2d = basic_armor_->forecast_armor(depth * 1000, robo_inf_.bullet_velocity.load(), 0);
+              pnp_->solvePnP(robo_inf_.bullet_velocity.load(), basic_armor_->returnFinalArmorDistinguish(0), target_2d);
+              updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pitch, depth, basic_armor_->returnArmorNum(), 0);
+            }else{
+              basic_armor_->forecast_armor_flag(armor_.armor_t, robo_inf_.yaw_angle, last_yaw);
+              yaw = 0;
+              if(basic_armor_->returnLostCnt() > 0){
+                updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pitch, depth, 1, 0);
+              }else{
+                updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pitch, depth, 0, 0);
+              }
+            }
+            last_yaw = yaw;
+            last_pitch = pitch;
+            break;
+          }
           case Mode::ENERGY_AGENCY: {
             // std::cout << " is ENERGY_AGENCY mode " << std::endl;
             buff_->runTask(src_img_, robo_inf_, robo_cmd_, time);
@@ -182,7 +207,7 @@ void WolfVision::disData() {
 }
 
 void WolfVision::switchMode() {
-  if (robo_inf_.model == Mode::ENERGY_AGENCY) {
+ if (robo_inf_.model == Mode::ENERGY_AGENCY || robo_inf_.model == Mode::TRADITION_MODE) {
     buff_num_ += 1;
     other_num_ = 0;
   } else {
