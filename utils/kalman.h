@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Eigen>
+#include <Eigen/Eigen>
 #include <iostream>
 
 template<int V_Z = 1, int V_X = 3>

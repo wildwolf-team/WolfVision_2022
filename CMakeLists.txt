@@ -78,9 +78,9 @@ if (NOT Eigen3_FOUND)
         GIT_TAG 3.4.0
     )
     FetchContent_MakeAvailable(Eigen3)
-    list(APPEND EXTRA_INCLUDES ${Eigen3_SOURCE_DIR}/Eigen)
+    list(APPEND EXTRA_INCLUDES ${Eigen3_SOURCE_DIR})
 else()
-    list(APPEND EXTRA_INCLUDES ${EIGEN3_INCLUDE_DIRS})
+    list(APPEND EXTRA_INCLUDES ${CMAKE_INSTALL_PREFIX}/${INCLUDE_INSTALL_DIR})
 endif()
 
 # Add mindvision-sdk directory and include path for target
