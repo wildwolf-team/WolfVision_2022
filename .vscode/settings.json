@@ -83,6 +83,9 @@
         "matrixfunctions": "cpp",
         "openglsupport": "cpp",
         "core": "cpp",
-        "geometry": "cpp"
+        "geometry": "cpp",
+        "eigen": "cpp",
+        "sparse": "cpp",
+        "dense": "cpp"
     }
 }
