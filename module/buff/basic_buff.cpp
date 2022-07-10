@@ -631,12 +631,19 @@ void Detector::findTarget(cv::Mat& _input_dst_img, cv::Mat& _input_bin_img, std:
 
     // 小轮廓周长条件
     small_rect_length_ = cv::arcLength(contours_[i], true);
-    if (small_rect_length_ < buff_param_.SMALL_TARGET_Length_MIN) {
+    small_rect_length_2 = (small_rect.size.height + small_rect.size.width) * 2;;
+    small_rect = cv::minAreaRect(contours_[i]);
+    // small_rect_length_ = cv::arcLength(contours_[i], true);
+    //if (small_rect_length_ < buff_param_.SMALL_TARGET_Length_MIN) {
+    if (std::fabs(small_rect_length_2 - small_rect_length_) / std::min(small_rect_length_2, small_rect_length_) < 0.001) {
       continue;
     }
     // 小轮廓面积条件
     small_rect_area_ = cv::contourArea(contours_[i]);
-    if (small_rect_area_ < buff_param_.SMALL_TARGET_AREA_MIN || small_rect_area_ > buff_param_.SMALL_TARGET_AREA_MAX) {
+    small_rect_size_area_ = small_rect.size.area();
+    // small_rect_area_ = cv::contourArea(contours_[i]);
+    // if (small_rect_area_ < buff_param_.SMALL_TARGET_AREA_MIN || small_rect_area_ > buff_param_.SMALL_TARGET_AREA_MAX) {
+    if(small_rect_size_area_ < small_rect_area_){
       continue;
     }
 
@@ -662,8 +669,10 @@ void Detector::findTarget(cv::Mat& _input_dst_img, cv::Mat& _input_bin_img, std:
     }
 
     // 判断内外轮廓的面积比是否正常
-    if (candidated_target_.areaRatio() <= buff_param_.AREA_RATIO_MIN || candidated_target_.areaRatio() >= buff_param_.AREA_RATIO_MAX) {
-      continue;
+    // if (candidated_target_.areaRatio() <= buff_param_.AREA_RATIO_MIN || candidated_target_.areaRatio() >= buff_param_.AREA_RATIO_MAX) {
+    //   continue;
+       if ( std::max(small_rect.size.width, small_rect.size.height) / std::min(small_rect.size.width, small_rect.size.height) < 1 )  {    
+         continue;
     }
 
     small_target_.displayFanArmor(_input_dst_img);
