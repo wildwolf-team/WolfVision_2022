@@ -192,6 +192,10 @@ class PnP {
    * @author XX
    */
   cv::Mat cameraPtz(cv::Mat& _t) {
+    double t_data[] = {static_cast<double>(pnp_config_.ptz_camera_x),
+                       static_cast<double>(pnp_config_.ptz_camera_y),
+                       static_cast<double>(pnp_config_.ptz_camera_z)};
+    t_camera_ptz = cv::Mat(3, 1, CV_64FC1, t_data);
     return r_camera_ptz * _t - t_camera_ptz;
   }
   /**
