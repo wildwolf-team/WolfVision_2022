@@ -54,4 +54,6 @@ enum Mode {
   TOP_MODE = 5,
   // Forecast Mode
   FORECAST_MODE = 6,
+  // Hit Spin Armor Mode
+  SPINARMOR_MODE
 };

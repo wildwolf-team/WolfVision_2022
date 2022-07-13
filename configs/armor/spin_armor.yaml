@@ -1,0 +1,12 @@
+%YAML:1.0
+---
+# 最佳装甲板出现的间隔时间，即 1/3 圈时间（单位 ms）
+interval_armor_time: 830 
+# 自动击打的范围，单位 ms
+auto_shoot_range: 20
+# 电控延迟，单位 ms
+shoot_delay: 120
+# 选择前哨站装甲板 pitch 范围，单位角度
+best_armor_pitch_range: 1
+# 最佳装甲板的深度
+best_armor_selected_yaw_range: 0.3
