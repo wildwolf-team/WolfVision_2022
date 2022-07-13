@@ -172,9 +172,12 @@ class Detector {
   // 轮廓点集 轮廓关系
   std::vector<std::vector<cv::Point>> contours_;
   std::vector<cv::Vec4i>              hierarchy_;
+  cv::RotatedRect                     small_rect;
   // 小轮廓条件(area and length)
   float small_rect_area_;
+  float small_rect_size_area_;
   float small_rect_length_;
+  float small_rect_length_2;
 
   // 大轮廓条件(area and length)
   float big_rect_area_;
