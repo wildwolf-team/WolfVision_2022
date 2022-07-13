@@ -24,6 +24,7 @@
 #include "devices/camera/mv_video_capture.hpp"
 #include "devices/serial/serial.hpp"
 #include "module/armor/basic_armor.hpp"
+#include "module/armor/spin_armor.hpp"
 #include "module/buff/basic_buff.hpp"
 #include "module/net/basic_net.h"
 #include "unistd.h"
@@ -71,6 +72,7 @@ class WolfVision
     std::shared_ptr<basic_armor::Detector> basic_armor_;
     std::shared_ptr<mindvision::VideoCapture> capture_;
     basic_net::armor_detection armor_;
+    std::unique_ptr<hero::spinArmor> spin_armor_;
     int buff_num_        = 0;
     int other_num_       = 0;
     int camera_exposure_ = 0;

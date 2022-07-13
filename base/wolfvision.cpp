@@ -34,6 +34,7 @@ WolfVision::WolfVision() try {
   buff_    = std::make_unique<basic_buff::Detector>(fmt::format("{}{}", CONFIG_FILE_PATH, "/buff/basic_buff_config.xml"));
   net_armor_ = std::make_unique<basic_net::Detector>();
   net_armor_->detection_init(fmt::format("{}{}", CONFIG_FILE_PATH, "/net/opt4_FP16.xml"), "GPU");
+  spin_armor_ = std::make_unique<hero::spinArmor>(fmt::format("{}{}", CONFIG_FILE_PATH, "/armor/spin_armor.yaml"));
   armor_.rst.reserve(128);
   pnp_->serYawPower(yaw_power_);
   if (vw_mode_) {
@@ -151,6 +152,31 @@ void WolfVision::autoAim() {
             updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
             break;
           }
+          case Mode::SPINARMOR_MODE: {
+            if(spin_armor_->run(robo_inf_)) {
+              updataWriteData(robo_cmd_, 0.f, spin_armor_->getTargetImuPitch() == 0.f ? 0.f : 
+                robo_inf_.pitch_angle.load() - spin_armor_->getTargetImuPitch() - 0.25f,
+                0.f, true, true);
+              std::this_thread::sleep_for(15ms);
+            } else {
+              updataWriteData(robo_cmd_, 0.f, spin_armor_->getTargetImuPitch() == 0.f ? 0.f :
+                robo_inf_.pitch_angle.load() - spin_armor_->getTargetImuPitch() - 0.25f,
+                0.f, true, false);
+            }
+            net_armor_->process_frame(src_img_, armor_);
+            if(net_armor_->screen_top_armor(robo_inf_, armor_, src_img_)) {
+              for(auto &rst : armor_.rst) {
+                pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 1, rst.pts);
+                if(pnp_->returnPitchAngle() < 3.f && pnp_->returnPitchAngle() > -3.f) {
+                  spin_armor_->add(pnp_->returnYawAngle(), pnp_->returnDepth(),
+                    robo_inf_.pitch_angle.load() - pnp_->returnPitchAngle());
+                  break;
+                }
+              }
+            }
+            debug_info_["spin_armor_mode"] = nlohmann::json(spin_armor_->returnDebugInfo());
+            break;
+          }
           default: {
             // std::cout << "Mode::SUP_SHOOT" << "\n";
             net_armor_->process_frame(src_img_, armor_);
@@ -197,8 +223,9 @@ void WolfVision::spin() {
 
 void WolfVision::disData() {
     debug_info_["imu_yaw"] = inf_.yaw_angle.load();
-    debug_info_["yaw"] = robo_cmd_.yaw_angle.load();
-    debug_info_["pitch"] = robo_cmd_.pitch_angle.load();
+    debug_info_["imu_pitch"] = inf_.pitch_angle.load();
+    debug_info_["vision_yaw"] = -robo_cmd_.yaw_angle.load();
+    debug_info_["vision_pitch"] = robo_cmd_.pitch_angle.load();
     debug_info_["depth"] = robo_cmd_.depth.load();
     debug_info_["tagret_yaw"] = inf_.yaw_angle.load() - pnp_->returnYawAngle();
     debug_info_["mode"] = robo_cmd_.data_type.load();
