@@ -52,7 +52,7 @@ class WolfVision
     RoboCmd     robo_cmd_;
     RoboInf     robo_inf_;
     RoboInf     inf_;
-    std::unique_ptr<RoboSerial> serial_;
+    std::unique_ptr<Ser::Serial> serial_;
 
   private:
     void webImage(const cv::Mat _src_img);

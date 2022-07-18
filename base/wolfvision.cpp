@@ -7,7 +7,7 @@ int main() {
 }
 
 WolfVision::WolfVision() try {
-	serial_ = std::make_unique<RoboSerial>("/dev/ttyUSB0", 115200);
+	serial_ = std::make_unique<Ser::Serial>("/dev/ttyUSB0", 115200);
 
   streamer_ptr_ = std::make_unique<nadjieb::MJPEGStreamer>();
   streamer_ptr_->start(8080, fmt::format("{}{}", SOURCE_PATH, "/utils/streamer.html"));
@@ -153,6 +153,7 @@ void WolfVision::autoAim() {
             break;
           }
           case Mode::SPINARMOR_MODE: {
+            spin_armor_->setInvOffset(robo_inf_.spin_armor_offset.load());
             if(spin_armor_->run(robo_inf_)) {
               updataWriteData(robo_cmd_, 0.f, spin_armor_->getTargetImuPitch() == 0.f ? 0.f : 
                 robo_inf_.pitch_angle.load() - spin_armor_->getTargetImuPitch() - 0.25f,
@@ -273,22 +274,9 @@ void WolfVision::updataWriteData(RoboCmd& _robo_cmd, const float _yaw, const flo
  */
 void WolfVision::serialWrite() {
   while (true) try {
-      if (serial_->isOpen()) {
-        serial_->WriteInfo(robo_cmd_);
-        // fmt::print("[{}] WriteInfo success.\n", idntifier_red);
-      } else {
-        serial_->open();
-      }
+      serial_->WriteInfo(robo_cmd_);
       std::this_thread::sleep_for(10ms);
-    } catch (const std::exception& e) {
-      serial_->close();
-      static int serial_read_excepted_times{0};
-      if (serial_read_excepted_times++ > 3) {
-        std::this_thread::sleep_for(10000ms);
-        fmt::print("[{}] read serial_ excepted to many times, sleep 10s.\n", idntifier_red);
-        serial_read_excepted_times = 0;
-      }
-      fmt::print("[{}] serial_ exception: {}\n", idntifier_red, e.what());
+    } catch (...) {
       std::this_thread::sleep_for(1000ms);
     }
 }
@@ -302,15 +290,7 @@ void WolfVision::serialRead() {
       if (serial_->isOpen()) {
         serial_->ReceiveInfo(robo_inf_);
       }
-      // std::this_thread::sleep_for(1ms);
-    } catch (const std::exception& e) {
-      static int serial_read_excepted_times{0};
-      if (serial_read_excepted_times++ > 3) {
-        std::this_thread::sleep_for(10000ms);
-        fmt::print("[{}] read serial_ excepted to many times, sleep 10s.\n", idntifier_red);
-        serial_read_excepted_times = 0;
-      }
-      fmt::print("[{}] serial_ exception: {}\n", idntifier_red, e.what());
+    } catch (...) {
       std::this_thread::sleep_for(1000ms);
     }
 }

@@ -38,11 +38,11 @@ include_directories(
 set(InferenceEngine_DIR "~/intel/openvino_2021/deployment_tools/inference_engine/share")
 find_package(InferenceEngine)
 
-# new serial
+# serial
 set(serial_SRCS
+    devices/serial/serial.cpp
     devices/serial/src/serial.cc
     devices/serial/src/impl/unix.cc
-    devices/serial/src/impl/list_ports/list_ports_linux.cc
     devices/serial/serial/serial.h
     devices/serial/serial/v8stdint.h
 )

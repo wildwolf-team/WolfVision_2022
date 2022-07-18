@@ -9,6 +9,7 @@ namespace hero {
     std::string config_path_;
     std::map<std::string, float> debug_info_;
     std::chrono::_V2::system_clock::time_point start_point_;
+    int inv_offset {0}; // 最佳装甲板出现间隔时间补偿
     int interval_armor_time_ = 1400; // 最佳装甲板出现的间隔时间，即 1/3 圈时间（单位 ms）
     float auto_shoot_range_ {20}; // 自动击打的范围，单位 ms
     float shoot_delay_ {50}; // 电控延迟，单位 ms
@@ -27,6 +28,7 @@ namespace hero {
         const float _target_imu_pitch);
       std::map<std::string, float> returnDebugInfo();
       float getTargetImuPitch();
+      void setInvOffset(const float _ofs);
       ~spinArmor();
   };
   
@@ -115,6 +117,10 @@ namespace hero {
     }
   }
   
+  void spinArmor::setInvOffset(const float _ofs) {
+    inv_offset = _ofs;
+  }
+
   inline spinArmor::~spinArmor() {
   }
   
