@@ -118,7 +118,7 @@ namespace hero {
   }
   
   void spinArmor::setInvOffset(const float _ofs) {
-    inv_offset = _ofs;
+    inv_offset = _ofs * 10;
   }
 
   inline spinArmor::~spinArmor() {
