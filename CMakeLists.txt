@@ -192,5 +192,11 @@ target_compile_definitions(wv-basic-buff PRIVATE "CONFIG_FILE_PATH=\"${CONFIG_FI
 
 # Add test_camera directory
 if(BUILD_TEST)
-    add_subdirectory(test/test_camera)
+    add_executable(test_shoot_delay ${PROJECT_SOURCE_DIR}/test/test_shoot_delay.cpp)
+    target_link_libraries(test_shoot_delay ${OpenCV_LIBS} serial fmt::fmt wv-mv-video-capture)
+    target_compile_definitions(test_shoot_delay PRIVATE "SOURCE_PATH=\"${SOURCE_PATH}\"")
+    target_compile_definitions(test_shoot_delay PRIVATE "CONFIG_FILE_PATH=\"${CONFIG_FILE_PATH}\"")
+    add_executable(snap ${PROJECT_SOURCE_DIR}/test/snap.cpp)
+    target_link_libraries(snap ${OpenCV_LIBS} fmt::fmt wv-mv-video-capture)
+    target_compile_definitions(snap PRIVATE "CONFIG_FILE_PATH=\"${CONFIG_FILE_PATH}\"")
 endif()
