@@ -52,17 +52,13 @@ bool Detector::topAutoShoot(const float depth, const int bullet_velocity, cv::Po
   return false;
 }
 
-void Detector::forecast_armor(const float depth, const int bullet_velocity, cv::Point2f p[4], cv::Mat src_img) {
-  double predict_time = (float(depth) / (bullet_velocity));
-  static int last_last_compensate_w = 0.f;
-  static int last_compensate_w = 0.f;
-  double s_yaw                       = atan2(predict_time * c_speed * float(depth), float(depth));
-  int compensate_w                   = 40 * tan(s_yaw) * 180 / M_PI;
-  compensate_w                       = (last_last_compensate_w + last_compensate_w + compensate_w) * 0.333;
-  last_compensate_w                  = compensate_w;
-  last_last_compensate_w             = last_compensate_w;
-  cv::putText(src_img, std::to_string(c_speed), cv::Point(50, 50), 3, 6, cv::Scalar(0, 255, 0));
-  cv::putText(src_img, std::to_string(compensate_w), cv::Point(50, 200), 3, 6, cv::Scalar(0, 0, 0));
+double Detector::forecast_armor(const float depth, const int bullet_velocity, cv::Point2f p[4], cv::Mat src_img) {
+  double predict_time = (float(depth) / (bullet_velocity)) + 0.1;
+  double s_yaw                       = atan2(predict_time * c_speed * depth, depth) * 180 / M_PI;
+  double aa                          = atan2(predict_time * c_speed * 1000, 1);
+  int compensate_w                   = tan(aa);
+  cv::putText(src_img, std::to_string(c_speed), cv::Point(50, 400), 2, 4, cv::Scalar(0, 255, 0));
+  // cv::putText(src_img, std::to_string(compensate_w), cv::Point(50, 200), 3, 6, cv::Scalar(0, 0, 0));
   static cv::Point2f ss              = cv::Point2f(0, 0);
   ss                                 = cv::Point2f(-compensate_w, 0);
   cv::Point2f center                 = (p[0] + p[2]) * 0.5 + ss;
@@ -71,6 +67,7 @@ void Detector::forecast_armor(const float depth, const int bullet_velocity, cv::
   p[1] += ss;
   p[2] += ss; 
   p[3] += ss;
+  return s_yaw;
 }
 
 void Detector::kalman_init() {
@@ -204,7 +201,11 @@ bool Detector::screen_armor(const RoboInf& _robo_inf, armor_detection& armor, cv
     armor.rst = armor_;
     for (int i = 0; i < armor.rst.size(); ++i) {
         cv::Point armor_center       = (armor.rst[i].pts[0] + armor.rst[i].pts[1] + armor.rst[i].pts[2] + armor.rst[i].pts[3]) * 0.25;
-        armor.rst[i].distance_center = getDistance(img_center, armor_center);
+        if (last_armor_center == cv::Point(0, 0)) {
+          armor.rst[i].distance_center = getDistance(img_center, armor_center);
+        } else {
+          armor.rst[i].distance_center = getDistance(last_armor_center, armor_center);
+        }
         num[armor.rst[i].tag_id] += 1;
     }
     std::sort(armor.rst.begin(), armor.rst.end(), [](bbox_t _a, bbox_t _b) { return _a.distance_center < _b.distance_center; });
@@ -216,12 +217,18 @@ bool Detector::screen_armor(const RoboInf& _robo_inf, armor_detection& armor, cv
       cv::line(_src_img, b.pts[2], b.pts[3], colors[2], 2);
       cv::line(_src_img, b.pts[3], b.pts[0], colors[2], 2);
       cv::putText(_src_img, std::to_string(b.tag_id), b.pts[0], cv::FONT_HERSHEY_SIMPLEX, 3, colors[b.color_id], 3);
+      cv::putText(_src_img, std::to_string(b.confidence), b.pts[3], cv::FONT_HERSHEY_SIMPLEX, 3, colors[b.color_id], 3);
     }
     armor_.clear();
     armor_.shrink_to_fit();
     if (armor.rst.size() > 0) {
+        last_armor_center = (armor.rst[0].pts[0] + armor.rst[0].pts[1] + armor.rst[0].pts[2] + armor.rst[0].pts[3]) * 0.25;
+        cv::circle(_src_img, last_armor_center, 10, {0, 0, 255}, -1);
+        last_height = (getDistance(armor.rst[0].pts[0], armor.rst[0].pts[1]) + getDistance(armor.rst[0].pts[2], armor.rst[0].pts[3])) * 0.5;
         return true;
     }
+    last_armor_center = cv::Point(0, 0);
+    last_height = 0;
     return false;
 }
 
@@ -324,25 +331,40 @@ void Detector::process_frame(cv::Mat& inframe, armor_detection& armor){
         std::cout << "无效图片输入" << std::endl;
         return ;
     }
+    // ROI处理
+    cv::Mat src_img = inframe.clone();
+    cv::Point roi_size = cv::Point(320, 192);
+    cv::Rect roi = cv::Rect(0, 0, 0, 0);
+    if (last_armor_center != cv::Point(0, 0) && last_height * 2 < roi_size.y) {
+      roi = cv::Rect(last_armor_center - roi_size, last_armor_center + roi_size);
+      if (roi.x < 0) roi.x = 0;
+      if (roi.y < 0) roi.y = 0;
+      if (roi.x > inframe.cols) roi.x = inframe.cols;
+      if (roi.y > inframe.rows) roi.y = inframe.rows;
+      if (roi.x + roi.width > inframe.cols) roi.width = inframe.cols - roi.x;
+      if (roi.y + roi.height > inframe.rows) roi.height = inframe.rows - roi.y; 
+      src_img = inframe(roi);
+    }
+    cv::rectangle(inframe, roi, {0, 255, 0}, 10, 8);
     // std::cout << "inframe.cols: " << inframe.cols << std::endl;
     // std::cout << "inframe.rows: " << inframe.rows << std::endl;
     
     // 图片预处理
     cv::Mat x;  // 不要使用static, 该Mat在后续需要转换为CV_32F类型, 但传入的图片是CV_U8类型, 使用的static会消耗多余时间用于转换类型
     float fx, fy; // x, y 轴的拉伸比例
-    float f = (float)inframe.cols / (float)inframe.rows; //长宽比
+    float f = (float)src_img.cols / (float)src_img.rows; //长宽比
     if(f > (640.f / 384.f)) {
       // 如果原图长宽比大于模型输入长宽比，则拉伸长。
-      cv::resize(inframe, x, cv::Size(), (double)640 / (double)inframe.cols, (double)640 / (double)inframe.cols);
-      fx = (float)inframe.cols / 640.f;
-      fy = (float)inframe.cols / 640.f;
+      cv::resize(src_img, x, cv::Size(), (double)640 / (double)src_img.cols, (double)640 / (double)src_img.cols);
+      fx = (float)src_img.cols / 640.f;
+      fy = (float)src_img.cols / 640.f;
       cv::copyMakeBorder(x, x, 0, 384 - x.rows, 0, 0,
                         cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0)); // 填充黑色
     } else {
       // 如果原图长宽比小于模型输入长宽比，则拉伸宽。
-      cv::resize(inframe, x, cv::Size(), (double)384 / (double)inframe.rows, (double)384 / (double)inframe.rows);
-      fx = (float)inframe.rows / 384.f;
-      fy = (float)inframe.rows / 384.f;
+      cv::resize(src_img, x, cv::Size(), (double)384 / (double)src_img.rows, (double)384 / (double)src_img.rows);
+      fx = (float)src_img.rows / 384.f;
+      fy = (float)src_img.rows / 384.f;
       cv::copyMakeBorder(x, x, 0, 0, 0, 640 - x.cols,
                           cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0)); // 填充黑色
     }
@@ -403,7 +425,7 @@ void Detector::process_frame(cv::Mat& inframe, armor_detection& armor){
         armor.rst.emplace_back();
         auto &box = armor.rst.back();
         memcpy(&box.pts, box_buffer, 8 * sizeof(float));    // 赋值, 把八个点取出来
-        for (auto &pt : box.pts) pt.x *= fx, pt.y *= fy;    // 对应resize图片前后的倍数, 把四点数据映射回原图
+        for (auto &pt : box.pts) pt.x *= fx, pt.y *= fy, pt.x += roi.x, pt.y += roi.y;    // 对应resize图片前后的倍数, 把四点数据映射回原图
         box.confidence  = sigmoid(box_buffer[8]);           // 置信度
         box.color_id    = argmax(box_buffer + 9, 4);        // 颜色 分类  // 0: blue, 1: red, 2: gray       3: ??
         box.tag_id      = argmax(box_buffer + 13, 7);       // 数字图案 分类  // 0: guard, 1-5: number, 6: base

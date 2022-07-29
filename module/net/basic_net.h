@@ -72,7 +72,7 @@ public:
      * @param bullet_velocity 
      * @return std::vector<cv::Point2f> 
      */
-    void forecast_armor(const float depth, const int bullet_velocity, cv::Point2f p[4], cv::Mat src_img);
+    double forecast_armor(const float depth, const int bullet_velocity, cv::Point2f p[4], cv::Mat src_img);
     bool topAutoShoot(const float depth, const int bullet_velocity, cv::Point2f p[4], const cv::RotatedRect top_armor, cv::Mat src_img);
     cv::RotatedRect returnArmorRotatedRect() { return last_top_armor; }
    private:
@@ -87,6 +87,8 @@ public:
     void  kalman_init();
     std::vector<bbox_t> armor_;
     cv::RotatedRect last_top_armor;
+    cv::Point last_armor_center = cv::Point(0, 0);
+    int last_height = 0;
     //存储初始化获得的可执行网络
     ExecutableNetwork   _network;           //
     OutputsDataMap          _outputinfo;        // 

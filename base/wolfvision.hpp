@@ -75,11 +75,10 @@ class WolfVision
     int other_num_       = 0;
     int camera_exposure_ = 0;
     int buff_exposure_   = 0;
+    int fps_             = 0;
     float yaw_power_     = 0.f;
     float pitch_         = 0.f;
     float depth_         = 0.f;
-
-
     float yaw = 0;
     float pitch = 0;
     float last_yaw = 0;

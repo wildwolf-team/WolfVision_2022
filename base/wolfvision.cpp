@@ -7,7 +7,7 @@ int main() {
 }
 
 WolfVision::WolfVision() try {
-	serial_ = std::make_unique<RoboSerial>("/dev/ttyUSB0", 115200);
+	serial_ = std::make_unique<RoboSerial>("/dev/ttyUSB0", 921600);
 
   streamer_ptr_ = std::make_unique<nadjieb::MJPEGStreamer>();
   streamer_ptr_->start(8080, fmt::format("{}{}", SOURCE_PATH, "/utils/streamer.html"));
@@ -61,7 +61,7 @@ void WolfVision::autoAim() {
       float time = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() * 0.001);
       if (debug_mode_) {
         static float last_time = 0;
-        fmt::print("[{}] fps == : {} \n", idntifier, 1/(time - last_time));
+        fps_ = 1/(time - last_time);
         last_time = time;
       }
       armor_.armor_t = time;     
@@ -132,6 +132,7 @@ void WolfVision::autoAim() {
             break;
           }
           case Mode::FORECAST_MODE: {
+            float fore_angle = 0.f;
             // std::cout << "Mode::FORECAST_MODE" << "\n";
             net_armor_->process_frame(src_img_, armor_);
             if (net_armor_->screen_armor(robo_inf_, armor_, src_img_)) {
@@ -140,15 +141,11 @@ void WolfVision::autoAim() {
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[0].pts);
               }
-              net_armor_->forecastFlagV(armor_.armor_t, inf_.yaw_angle.load() - pnp_->returnYawAngle(), inf_.pitch_angle.load() + pnp_->returnPitchAngle());
-              net_armor_->forecast_armor(pnp_->returnDepth(), robo_inf_.bullet_velocity.load(), armor_.rst[0].pts, src_img_);
-              if (armor_.rst[0].tag_id == 1 || armor_.rst[0].tag_id == 0) {
-                pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 1, armor_.rst[0].pts);
-              } else {
-                pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[0].pts);
-              }
+              net_armor_->forecastFlagV(armor_.armor_t, inf_.yaw_angle.load() - pnp_->returnYawAngle(), inf_.pitch_angle.load());
+              fore_angle = net_armor_->forecast_armor(pnp_->returnDepth(), robo_inf_.bullet_velocity.load(), armor_.rst[0].pts, src_img_);
+              cv::putText(src_img_, std::to_string(fore_angle), cv::Point(50, 200), 2, 4, cv::Scalar(0, 255, 0));
             }
-            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
+            updataWriteData(robo_cmd_, pnp_->returnYawAngle() - fore_angle, pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
             break;
           }
           default: {
@@ -202,6 +199,7 @@ void WolfVision::disData() {
     debug_info_["depth"] = robo_cmd_.depth.load();
     debug_info_["tagret_yaw"] = inf_.yaw_angle.load() - pnp_->returnYawAngle();
     debug_info_["mode"] = robo_cmd_.data_type.load();
+    debug_info_["fps"] = fps_;
     pj_udp_cl_->send_message(debug_info_.dump());
     debug_info_.empty();
 }

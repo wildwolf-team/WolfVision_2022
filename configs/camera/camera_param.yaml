@@ -1,15 +1,15 @@
 %YAML:1.0
 ---
-AnalogGain: 11
+AnalogGain: 15
 ExposureTime: 100
 
-Sharpen: 90
+Sharpen: 0
 
-Gamma: 60
-Contrast: 60
+Gamma: 70
+Contrast: 90
 
-RedGain: 142
-GreenGain: 120
+RedGain: 150
+GreenGain: 113
 BlueGain: 100
 
 Saturation: 100
